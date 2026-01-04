@@ -552,42 +552,70 @@ kbd {
 
 /* 响应式设计 */
 @media (max-width: 900px) {
+    .game-container {
+        display: flex;
+        flex-direction: column;
+    }
+
     .game-main {
-        grid-template-columns: 1fr;
+        display: contents;
+        /* Allows children to be ordered within game-container */
+    }
+
+    .game-header {
+        order: 1;
+    }
+
+    .board-section {
+        order: 2;
+        padding: 10px;
+        /* Reduce padding on mobile */
+    }
+
+    .pieces-section {
+        order: 3;
+        margin-top: 10px;
+        padding: 15px;
     }
 
     .control-panel {
-        order: -1;
-        flex-direction: row;
-        flex-wrap: wrap;
+        order: 4;
+        /* Controls at bottom */
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 10px;
     }
 
     .panel-section {
-        flex: 1;
-        min-width: 200px;
+        width: 100%;
     }
 
-    /* 移动端突出显示拼块操作按钮 */
+    /* Make piece controls (Rotate/Flip) very accessible */
     .piece-controls {
-        order: -1;
-        width: 100%;
-        min-width: 100%;
+        position: sticky;
+        bottom: 0;
+        z-index: 100;
+        background: var(--bg-card);
+        padding: 10px;
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+        margin: 0 -20px -20px -20px;
+        /* Extend to edges */
+        width: calc(100% + 40px);
     }
 
     .piece-action-btns {
-        justify-content: center;
+        justify-content: space-between;
     }
 
     .btn-action,
     .btn-action-secondary {
-        min-width: 90px;
-        padding: 14px 16px;
-        font-size: 1rem;
+        flex: 1;
+        padding: 15px;
     }
 
     .shortcuts-hint {
         display: none;
-        /* 移动端隐藏快捷键提示 */
     }
 }
 
@@ -598,21 +626,32 @@ kbd {
 
     .game-container {
         padding: 10px;
+        gap: 10px;
+    }
+
+    .board-section {
+        padding: 5px;
+    }
+
+    /* Enhance piece size for touch */
+    .piece-wrapper {
+        padding: 5px;
     }
 
     .piece-svg {
-        width: 60px;
-        height: 45px;
+        width: 50px;
+        /* Slightly smaller to fit more */
+        height: 40px;
     }
 
-    /* 移动端操作按钮更大 */
-    .btn-action,
-    .btn-action-secondary {
-        padding: 16px 20px;
-        font-size: 1.1rem;
-    }
-
-    .piece-action-btns {
-        gap: 10px;
+    .pieces-container {
+        gap: 8px;
+        justify-content: flex-start;
+        /* Align left for scrolling if needed */
+        overflow-x: auto;
+        padding-bottom: 5px;
+        flex-wrap: wrap;
+        /* Keep wrapping for now, maybe scroll is better? User said "close". Wrapping is safer. */
+        justify-content: center;
     }
 }

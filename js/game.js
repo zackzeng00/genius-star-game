@@ -91,6 +91,7 @@ const Game = {
         this.boardSvg.addEventListener('mousemove', (e) => this.handleBoardMouseMove(e));
         this.boardSvg.addEventListener('mouseup', (e) => this.handleBoardMouseUp(e));
         this.boardSvg.addEventListener('mouseleave', (e) => this.handleBoardMouseLeave(e));
+        this.boardSvg.addEventListener('click', (e) => this.handleBoardClick(e));
 
         // 触摸事件
         this.boardSvg.addEventListener('touchmove', (e) => this.handleBoardTouchMove(e));
@@ -129,6 +130,7 @@ const Game = {
     cancelSelection() {
         this.selectedPiece = null;
         this.renderPieces();
+        this.clearPreview();
         this.setStatus('已取消选择');
     },
 
@@ -400,6 +402,17 @@ const Game = {
     handleGlobalMouseMove: function (e) {
         if (Game.isDragging) {
             Game.updateDragPosition(e.clientX, e.clientY);
+            // Also show preview on board
+            const boardRect = Game.boardSvg.getBoundingClientRect();
+            if (e.clientX >= boardRect.left && e.clientX <= boardRect.right &&
+                e.clientY >= boardRect.top && e.clientY <= boardRect.bottom) {
+                const svgPoint = Game.clientToSvg(e.clientX, e.clientY);
+                const shift = Board.findPlacement(Game.selectedPiece, svgPoint.x, svgPoint.y);
+                if (shift) Game.renderPreview(Game.selectedPiece, shift);
+                else Game.clearPreview();
+            } else {
+                Game.clearPreview();
+            }
         }
     },
 
@@ -419,6 +432,19 @@ const Game = {
         if (Game.isDragging && e.touches.length > 0) {
             e.preventDefault();
             Game.updateDragPosition(e.touches[0].clientX, e.touches[0].clientY);
+
+            // Also show preview on board
+            const touch = e.touches[0];
+            const boardRect = Game.boardSvg.getBoundingClientRect();
+            if (touch.clientX >= boardRect.left && touch.clientX <= boardRect.right &&
+                touch.clientY >= boardRect.top && touch.clientY <= boardRect.bottom) {
+                const svgPoint = Game.clientToSvg(touch.clientX, touch.clientY);
+                const shift = Board.findPlacement(Game.selectedPiece, svgPoint.x, svgPoint.y);
+                if (shift) Game.renderPreview(Game.selectedPiece, shift);
+                else Game.clearPreview();
+            } else {
+                Game.clearPreview();
+            }
         }
     },
 
@@ -450,6 +476,8 @@ const Game = {
             this.dragElement = null;
         }
 
+        this.clearPreview();
+
         // 检查是否在棋盘上
         const boardRect = this.boardSvg.getBoundingClientRect();
         if (clientX >= boardRect.left && clientX <= boardRect.right &&
@@ -461,8 +489,6 @@ const Game = {
             // 尝试放置拼块
             this.tryPlacePiece(this.selectedPiece, svgPoint.x, svgPoint.y);
         }
-
-        this.renderPieces();
     },
 
     /**
@@ -478,6 +504,41 @@ const Game = {
     },
 
     /**
+     * 渲染预览（Ghost Piece）
+     */
+    renderPreview(piece, shift) {
+        this.clearPreview();
+
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('class', 'preview-piece');
+        group.style.opacity = '0.4';
+        group.style.pointerEvents = 'none'; // Ensure it doesn't block events
+
+        const placedTriangles = Pieces.getPlacedTriangles(piece, shift);
+
+        for (const t of placedTriangles) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', Geometry.trianglePath(t));
+            path.setAttribute('fill', piece.color);
+            path.setAttribute('stroke', 'white');
+            path.setAttribute('stroke-width', '0.05');
+            group.appendChild(path);
+        }
+
+        this.boardSvg.appendChild(group);
+    },
+
+    /**
+     * 清除预览
+     */
+    clearPreview() {
+        const existing = this.boardSvg.querySelector('.preview-piece');
+        if (existing) {
+            existing.remove();
+        }
+    },
+
+    /**
      * 尝试放置拼块
      */
     tryPlacePiece(piece, x, y) {
@@ -490,12 +551,17 @@ const Game = {
             // 放置拼块
             if (Board.placePiece(piece, shift)) {
                 this.renderBoard();
+                this.selectedPiece = null; // Deselect after placing
+                this.renderPieces();
+                this.clearPreview();
                 this.setStatus(`✓ 已放置: ${piece.name}`);
 
                 // 检查是否完成
                 if (Board.isComplete()) {
                     this.showVictory();
                 }
+            } else {
+                this.setStatus(`✗ 放置失败`);
             }
         } else {
             this.setStatus(`✗ 无法放置在此位置`);
@@ -511,44 +577,125 @@ const Game = {
         // 渲染已放置的拼块
         this.pieces.forEach(piece => {
             if (piece.placed && piece.position) {
-                Pieces.renderOnBoard(piece, this.boardSvg, piece.position);
+                const group = Pieces.renderOnBoard(piece, this.boardSvg, piece.position);
+
+                // Add click listener to lift piece
+                group.style.cursor = 'pointer';
+                group.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent board click
+                    this.liftPiece(piece);
+                });
+
+                // Add touch listener for mobile tap
+                // Note: touchstart bubbles to touchstart on svg (which doesn't place).
+                // touchend bubbles to touchend on svg (which places).
+                // We need to stop explicit tap-to-lift from triggering place.
+                group.addEventListener('touchstart', (e) => {
+                    // Start lift logic
+                    // If we use click, do we need touchstart? 
+                    // Mobile browsers trigger click after tap.
+                    // Doing it on click is safer.
+                    e.stopPropagation();
+                });
             }
         });
+    },
+
+    /**
+     * 提起已放置的拼块
+     */
+    liftPiece(piece) {
+        if (!piece.placed) return;
+
+        Board.removePiece(piece);
+        this.selectedPiece = piece;
+        this.renderBoard();
+        this.renderPieces();
+        this.setStatus(`已提起: ${piece.name} - 可旋转/翻转/移动`);
+
+        // Show Ghost immediately if mouse is there?
+        // Hard to know mouse pos here.
     },
 
     /**
      * 棋盘鼠标移动
      */
     handleBoardMouseMove(e) {
-        // 预览拖拽位置
+        if (this.selectedPiece && !this.selectedPiece.placed) {
+            const svgPoint = this.clientToSvg(e.clientX, e.clientY);
+            const shift = Board.findPlacement(this.selectedPiece, svgPoint.x, svgPoint.y);
+
+            if (shift) {
+                this.renderPreview(this.selectedPiece, shift);
+            } else {
+                this.clearPreview();
+            }
+        }
     },
 
     /**
-     * 棋盘鼠标释放
+     * 棋盘鼠标释放 - No op for placement (moved to click)
      */
     handleBoardMouseUp(e) {
-        // 放置拼块
+        // We use click for placement now to avoid conflict with lift
+    },
+
+    /**
+     * 棋盘点击 - New placement handler
+     */
+    handleBoardClick(e) {
+        if (!this.isDragging && this.selectedPiece && !this.selectedPiece.placed) {
+            const svgPoint = this.clientToSvg(e.clientX, e.clientY);
+            this.tryPlacePiece(this.selectedPiece, svgPoint.x, svgPoint.y);
+        }
     },
 
     /**
      * 棋盘鼠标离开
      */
     handleBoardMouseLeave(e) {
-        // 取消预览
+        this.clearPreview();
     },
 
     /**
      * 触摸移动
      */
     handleBoardTouchMove(e) {
-        // 触摸预览
+        if (this.selectedPiece && !this.selectedPiece.placed && e.touches.length > 0) {
+            e.preventDefault(); // Prevent scroll
+            const touch = e.touches[0];
+            const svgPoint = this.clientToSvg(touch.clientX, touch.clientY);
+            const shift = Board.findPlacement(this.selectedPiece, svgPoint.x, svgPoint.y);
+
+            if (shift) {
+                this.renderPreview(this.selectedPiece, shift);
+            } else {
+                this.clearPreview();
+            }
+        }
     },
 
     /**
      * 触摸结束
      */
     handleBoardTouchEnd(e) {
-        // 触摸放置
+        // If not dragging, try to place
+        // Note: touch end might trigger click. 
+        // If we handle touchEnd, we might duplicate place.
+        // Let's rely on click for placement (so tap -> placement).
+        // Standard mobile browsers fire click 300ms after tap.
+        // So we can remove this or ensure it doesn't double place.
+        // For responsiveness, touchEnd is better.
+        // But conflict with Lift is real.
+        // Stick to click for unity? Or handle touchEnd carefully.
+
+        if (!this.isDragging && this.selectedPiece && !this.selectedPiece.placed && e.changedTouches.length > 0) {
+            // If we trust click event will fire, we can skip this.
+            // Or strictly use this and prevent default click.
+            // Let's use click for now to match mouse logic fixes.
+            // e.preventDefault(); // This would stop click.
+            // Let's NOT place here, let Click handle it.
+        }
     },
 
     /**
@@ -562,6 +709,9 @@ const Game = {
                 // 旋转
                 Pieces.rotate(this.selectedPiece);
                 this.renderPieces();
+                // If over board, update preview immediately? 
+                // Hard to get mouse position here without tracking it globally.
+                // Just update status. Preview will update on next mouse move.
                 this.setStatus(`🔄 已旋转: ${this.selectedPiece.name}`);
                 break;
             case 'f':
@@ -574,6 +724,7 @@ const Game = {
                 // 取消选择
                 this.selectedPiece = null;
                 this.renderPieces();
+                this.clearPreview();
                 this.setStatus('已取消选择');
                 break;
         }
