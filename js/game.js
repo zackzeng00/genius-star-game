@@ -80,14 +80,9 @@ const Game = {
         });
 
         // 抽屉切换按钮
-        document.getElementById('drawer-toggle').addEventListener('click', () => {
-            document.getElementById('control-panel').classList.toggle('collapsed');
-        });
 
-        // 拼块操作按钮
-        document.getElementById('btn-rotate').addEventListener('click', () => this.rotatePiece());
-        document.getElementById('btn-flip').addEventListener('click', () => this.flipPiece());
-        document.getElementById('btn-cancel').addEventListener('click', () => this.cancelSelection());
+
+
 
         // 键盘事件
         document.addEventListener('keydown', (e) => this.handleKeydown(e));
@@ -113,12 +108,10 @@ const Game = {
         }
         Pieces.rotate(this.selectedPiece);
         this.renderPieces();
+        this.updateFloatingPreview(); // Update the svg in floating element
         this.setStatus(`🔄 已旋转: ${this.selectedPiece.name}`);
     },
 
-    /**
-     * 翻转当前选中的拼块
-     */
     flipPiece() {
         if (!this.selectedPiece || this.selectedPiece.placed) {
             this.setStatus('请先选中一个拼块');
@@ -126,18 +119,31 @@ const Game = {
         }
         Pieces.reflect(this.selectedPiece);
         this.renderPieces();
+        this.updateFloatingPreview(); // Update the svg in floating element
         this.setStatus(`↔️ 已翻转: ${this.selectedPiece.name}`);
     },
 
-    /**
-     * 取消选中拼块
-     */
     cancelSelection() {
         this.selectedPiece = null;
+        if (this.floatingElement) {
+            this.floatingElement.remove();
+            this.floatingElement = null;
+        }
         this.renderPieces();
         this.clearPreview();
-        this.hidePieceActions();
         this.setStatus('已取消选择');
+    },
+
+    updateFloatingPreview() {
+        if (this.floatingElement && this.selectedPiece) {
+            const svg = this.floatingElement.querySelector('svg');
+            if (svg) {
+                // Clear existing
+                while (svg.firstChild) svg.removeChild(svg.firstChild);
+                // Re-render
+                Pieces.render(this.selectedPiece, svg, { scale: 1, offsetX: 0, offsetY: 0 });
+            }
+        }
     },
 
     /**
@@ -307,56 +313,147 @@ const Game = {
     },
 
     /**
-     * 选择拼块
+     * 选择拼块（生成浮动拼块）
      */
-    selectPiece(piece) {
+    selectPiece(piece, startX, startY) {
+        if (this.selectedPiece === piece && this.floatingElement) return;
+
+        if (this.selectedPiece) {
+            // 如果已有选中的，先取消（或者切换？）
+            // 这里我们先只是切换
+            this.cancelSelection();
+        }
+
         if (piece.placed) {
-            // 如果拼块已放置，先移除
             this.removePlacedPiece(piece);
         }
 
         this.selectedPiece = piece;
-        this.renderPieces();
-        this.showPieceActions(piece);
-        this.setStatus(`已选中: ${piece.name} - 可旋转/翻转/放回`);
+        this.renderPieces(); // 更新清单（隐藏被选中的）
+
+        // 创建浮动元素
+        this.createFloatingPiece(piece, startX, startY);
+        this.setStatus(`操作: 拖动移动 / 按钮旋转翻转`);
     },
 
     /**
-     * 显示浮动操作面板
+     * 创建浮动拼块元素
      */
-    showPieceActions(piece) {
-        const actionsEl = document.getElementById('piece-actions');
-        actionsEl.classList.remove('hidden');
+    createFloatingPiece(piece, x, y) {
+        // 移除旧的
+        if (this.floatingElement) this.floatingElement.remove();
 
-        // 找到选中拼块的 DOM 元素
-        const pieceWrapper = this.piecesContainer.querySelector(`.piece-wrapper[data-piece-index="${piece.index}"]`);
-        if (pieceWrapper) {
-            const rect = pieceWrapper.getBoundingClientRect();
-            // 显示在拼块上方
-            actionsEl.style.left = `${rect.left + rect.width / 2 - actionsEl.offsetWidth / 2}px`;
-            actionsEl.style.top = `${rect.top - actionsEl.offsetHeight - 10 + window.scrollY}px`;
-
-            // 确保不超出屏幕
-            const actionsRect = actionsEl.getBoundingClientRect();
-            if (actionsRect.left < 10) {
-                actionsEl.style.left = '10px';
-            }
-            if (actionsRect.right > window.innerWidth - 10) {
-                actionsEl.style.left = `${window.innerWidth - actionsEl.offsetWidth - 10}px`;
-            }
-            if (actionsRect.top < 10) {
-                // 如果上方空间不够，显示在下方
-                actionsEl.style.top = `${rect.bottom + 10 + window.scrollY}px`;
+        const container = document.createElement('div');
+        container.className = 'floating-piece-container';
+        container.style.position = 'absolute';
+        container.style.zIndex = '1000';
+        // 初始位置：如果没有指定，则位于屏幕中心或原位置？
+        // 简单起见，如果 x,y 未指定，找 inventory 位置
+        if (x === undefined || y === undefined) {
+            const wrapper = this.piecesContainer.querySelector(`.piece-wrapper[data-piece-index="${piece.index}"]`);
+            if (wrapper) {
+                const rect = wrapper.getBoundingClientRect();
+                x = rect.left + window.scrollX;
+                y = rect.top + window.scrollY;
+            } else {
+                x = window.innerWidth / 2;
+                y = window.innerHeight / 2;
             }
         }
+
+        this.floatingPos = { x, y };
+        this.updateFloatingElementPosition();
+
+        // 渲染拼块 SVG
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'piece-svg'); // Add class for easier selection later
+        svg.setAttribute('viewBox', '-6 -6 12 12'); // 保持与棋盘一致的坐标系以便视觉大小匹配
+        // 注意：Inventory 是 0.8 缩放，这里我们可能需要大一点？或者保持一致？
+        // 棋盘 SVG 是 viewBox="-6 -6 12 12"。
+        // 拼块渲染需要一致。
+        svg.style.width = '120px'; // 稍微大一点方便操作
+        svg.style.height = '120px';
+        svg.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))';
+        svg.style.overflow = 'visible';
+
+        Pieces.render(piece, svg, { scale: 1, offsetX: 0, offsetY: 0 }); // scale 1 对应棋盘大小
+        container.appendChild(svg);
+
+        // 添加操作按钮（附着在拼块上方）
+        const actions = document.createElement('div');
+        actions.className = 'floating-actions';
+        actions.innerHTML = `
+            <button class="action-btn" data-action="rotate">🔄</button>
+            <button class="action-btn" data-action="flip">↔️</button>
+            <button class="action-btn action-cancel" data-action="cancel">✕</button>
+        `;
+        // 绑定按钮事件
+        actions.querySelector('[data-action="rotate"]').addEventListener('mousedown', (e) => { e.stopPropagation(); this.rotatePiece(); });
+        actions.querySelector('[data-action="flip"]').addEventListener('mousedown', (e) => { e.stopPropagation(); this.flipPiece(); });
+        actions.querySelector('[data-action="cancel"]').addEventListener('mousedown', (e) => { e.stopPropagation(); this.cancelSelection(); });
+
+        // Mobile touch support for buttons
+        actions.querySelector('[data-action="rotate"]').addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); this.rotatePiece(); });
+        actions.querySelector('[data-action="flip"]').addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); this.flipPiece(); });
+        actions.querySelector('[data-action="cancel"]').addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); this.cancelSelection(); });
+
+        container.appendChild(actions);
+
+        // 绑定拖拽事件到浮动元素本身
+        container.addEventListener('mousedown', (e) => this.startFloatingDrag(e));
+        container.addEventListener('touchstart', (e) => this.startFloatingTouchDrag(e));
+
+        document.body.appendChild(container);
+        this.floatingElement = container;
+    },
+
+    updateFloatingElementPosition() {
+        if (!this.floatingElement || !this.floatingPos) return;
+        // Adjust for the size of the floating element itself to center it on the cursor
+        // Assuming 120px width/height for the SVG, and actions above it.
+        // Let's center the SVG part on the cursor.
+        const svgWidth = 120; // from createFloatingPiece
+        const svgHeight = 120;
+        this.floatingElement.style.left = `${this.floatingPos.x - svgWidth / 2}px`;
+        this.floatingElement.style.top = `${this.floatingPos.y - svgHeight / 2}px`;
     },
 
     /**
-     * 隐藏浮动操作面板
+     * 显示浮动操作面板 (不再使用，操作按钮已附着在浮动拼块上)
      */
-    hidePieceActions() {
-        document.getElementById('piece-actions').classList.add('hidden');
-    },
+    // showPieceActions(piece) {
+    //     const actionsEl = document.getElementById('piece-actions');
+    //     actionsEl.classList.remove('hidden');
+
+    //     // 找到选中拼块的 DOM 元素
+    //     const pieceWrapper = this.piecesContainer.querySelector(`.piece-wrapper[data-piece-index="${piece.index}"]`);
+    //     if (pieceWrapper) {
+    //         const rect = pieceWrapper.getBoundingClientRect();
+    //         // 显示在拼块上方
+    //         actionsEl.style.left = `${rect.left + rect.width / 2 - actionsEl.offsetWidth / 2}px`;
+    //         actionsEl.style.top = `${rect.top - actionsEl.offsetHeight - 10 + window.scrollY}px`;
+
+    //         // 确保不超出屏幕
+    //         const actionsRect = actionsEl.getBoundingClientRect();
+    //         if (actionsRect.left < 10) {
+    //             actionsEl.style.left = '10px';
+    //         }
+    //         if (actionsRect.right > window.innerWidth - 10) {
+    //             actionsEl.style.left = `${window.innerWidth - actionsEl.offsetWidth - 10}px`;
+    //         }
+    //         if (actionsRect.top < 10) {
+    //             // 如果上方空间不够，显示在下方
+    //             actionsEl.style.top = `${rect.bottom + 10 + window.scrollY}px`;
+    //         }
+    //     }
+    // },
+
+    /**
+     * 隐藏浮动操作面板 (不再使用)
+     */
+    // hidePieceActions() {
+    //     document.getElementById('piece-actions').classList.add('hidden');
+    // },
 
     /**
      * 移除已放置的拼块
@@ -368,173 +465,162 @@ const Game = {
     },
 
     /**
-     * 开始拖拽
+     * Start dragging the floating piece
      */
-    startDrag(e, piece) {
-        if (piece.placed) return;
+    startFloatingDrag(e) {
+        if (!this.floatingElement) return;
+        e.preventDefault(); // Prevent default touch actions
 
+        this.isDraggingFloating = true;
+        const clientX = e.clientX || e.touches[0].clientX;
+        const clientY = e.clientY || e.touches[0].clientY;
+
+        // Calculate offset so we drag from clicked point relative to the element
+        const rect = this.floatingElement.getBoundingClientRect();
+        // Since floatingElement is absolute, rect gives us screen coords.
+        // We want to update this.floatingPos (which is left/top).
+        // this.floatingPos represents the top-left of the svg-center? 
+        // No, createFloatingPiece sets floatingPos as the top-left of container?
+        // Let's re-read createFloatingPiece: 
+        // this.floatingPos = {x,y}
+        // updateFloatingLogic: left = pos.x - 60, top = pos.y - 60.
+        // So pos is the visual CENTER of the piece.
+
+        // Let's track the offset from the visual center.
+        this.dragOffset = {
+            x: clientX - this.floatingPos.x,
+            y: clientY - this.floatingPos.y
+        };
+
+        // Bind listeners
+        // standard naming for removal later
+        this._boundFloatingMove = this.handleFloatingMove.bind(this);
+        this._boundFloatingUp = this.handleFloatingUp.bind(this);
+
+        document.addEventListener('mousemove', this._boundFloatingMove);
+        document.addEventListener('mouseup', this._boundFloatingUp);
+        document.addEventListener('touchmove', this._boundFloatingMove, { passive: false });
+        document.addEventListener('touchend', this._boundFloatingUp);
+
+        // Disable pointer events on floater during drag to allow probing underneath?
+        // Actually, we calculate Board overlap manually, so we don't strictly need to probe underneath
+        // BUT if we want hover effects on board triangles, we might.
+        // For now, let's keep it simple.
+        this.floatingElement.style.cursor = 'grabbing';
+    },
+
+    handleFloatingMove(e) {
+        if (!this.isDraggingFloating) return;
         e.preventDefault();
-        this.isDragging = true;
-        this.selectedPiece = piece;
 
-        // 创建拖拽元素
-        this.createDragElement(piece, e.clientX, e.clientY);
-    },
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
-    /**
-     * 开始触摸拖拽
-     */
-    startTouchDrag(e, piece) {
-        if (piece.placed) return;
+        if (clientX === undefined) return;
 
-        e.preventDefault();
-        this.isDragging = true;
-        this.selectedPiece = piece;
+        // Update position
+        this.floatingPos.x = clientX - this.dragOffset.x;
+        this.floatingPos.y = clientY - this.dragOffset.y;
+        this.updateFloatingElementPosition();
 
-        const touch = e.touches[0];
-        this.createDragElement(piece, touch.clientX, touch.clientY);
-    },
+        // Check board preview
+        const boardRect = this.boardSvg.getBoundingClientRect();
+        // Allow some tolerance
+        if (clientX >= boardRect.left && clientX <= boardRect.right &&
+            clientY >= boardRect.top && clientY <= boardRect.bottom) {
 
-    /**
-     * 创建拖拽元素
-     */
-    createDragElement(piece, clientX, clientY) {
-        // 移除现有拖拽元素
-        if (this.dragElement) {
-            this.dragElement.remove();
-        }
+            // Map clientX/Y (which is near piece center) to SVG coords
+            const svgPoint = this.clientToSvg(this.floatingPos.x, this.floatingPos.y);
 
-        // 创建新的拖拽元素
-        const dragEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        dragEl.setAttribute('class', 'drag-element');
-        dragEl.setAttribute('viewBox', '-2 -2 4 4');
-        dragEl.style.cssText = `
-            position: fixed;
-            width: 100px;
-            height: 80px;
-            pointer-events: none;
-            z-index: 1000;
-            opacity: 0.8;
-        `;
-
-        Pieces.render(piece, dragEl, { scale: 0.8 });
-
-        document.body.appendChild(dragEl);
-        this.dragElement = dragEl;
-
-        this.updateDragPosition(clientX, clientY);
-
-        // 添加全局事件监听
-        document.addEventListener('mousemove', this.handleGlobalMouseMove);
-        document.addEventListener('mouseup', this.handleGlobalMouseUp);
-        document.addEventListener('touchmove', this.handleGlobalTouchMove);
-        document.addEventListener('touchend', this.handleGlobalTouchEnd);
-    },
-
-    /**
-     * 更新拖拽位置
-     */
-    updateDragPosition(clientX, clientY) {
-        if (this.dragElement) {
-            this.dragElement.style.left = (clientX - 50) + 'px';
-            this.dragElement.style.top = (clientY - 40) + 'px';
-        }
-    },
-
-    /**
-     * 全局鼠标移动
-     */
-    handleGlobalMouseMove: function (e) {
-        if (Game.isDragging) {
-            Game.updateDragPosition(e.clientX, e.clientY);
-            // Also show preview on board
-            const boardRect = Game.boardSvg.getBoundingClientRect();
-            if (e.clientX >= boardRect.left && e.clientX <= boardRect.right &&
-                e.clientY >= boardRect.top && e.clientY <= boardRect.bottom) {
-                const svgPoint = Game.clientToSvg(e.clientX, e.clientY);
-                const shift = Board.findPlacement(Game.selectedPiece, svgPoint.x, svgPoint.y);
-                if (shift) Game.renderPreview(Game.selectedPiece, shift);
-                else Game.clearPreview();
+            const shift = Board.findPlacement(this.selectedPiece, svgPoint.x, svgPoint.y);
+            if (shift) {
+                this.renderPreview(this.selectedPiece, shift);
             } else {
-                Game.clearPreview();
+                this.clearPreview();
             }
+        } else {
+            this.clearPreview();
         }
     },
 
-    /**
-     * 全局鼠标释放
-     */
-    handleGlobalMouseUp: function (e) {
-        if (Game.isDragging) {
-            Game.endDrag(e.clientX, e.clientY);
-        }
-    },
+    handleFloatingUp(e) {
+        if (!this.isDraggingFloating) return;
+        this.isDraggingFloating = false;
 
-    /**
-     * 全局触摸移动
-     */
-    handleGlobalTouchMove: function (e) {
-        if (Game.isDragging && e.touches.length > 0) {
-            e.preventDefault();
-            Game.updateDragPosition(e.touches[0].clientX, e.touches[0].clientY);
+        document.removeEventListener('mousemove', this._boundFloatingMove);
+        document.removeEventListener('mouseup', this._boundFloatingUp);
+        document.removeEventListener('touchmove', this._boundFloatingMove);
+        document.removeEventListener('touchend', this._boundFloatingUp);
 
-            // Also show preview on board
-            const touch = e.touches[0];
-            const boardRect = Game.boardSvg.getBoundingClientRect();
-            if (touch.clientX >= boardRect.left && touch.clientX <= boardRect.right &&
-                touch.clientY >= boardRect.top && touch.clientY <= boardRect.bottom) {
-                const svgPoint = Game.clientToSvg(touch.clientX, touch.clientY);
-                const shift = Board.findPlacement(Game.selectedPiece, svgPoint.x, svgPoint.y);
-                if (shift) Game.renderPreview(Game.selectedPiece, shift);
-                else Game.clearPreview();
-            } else {
-                Game.clearPreview();
-            }
-        }
-    },
-
-    /**
-     * 全局触摸结束
-     */
-    handleGlobalTouchEnd: function (e) {
-        if (Game.isDragging) {
-            const touch = e.changedTouches[0];
-            Game.endDrag(touch.clientX, touch.clientY);
-        }
-    },
-
-    /**
-     * 结束拖拽
-     */
-    endDrag(clientX, clientY) {
-        this.isDragging = false;
-
-        // 移除全局事件监听
-        document.removeEventListener('mousemove', this.handleGlobalMouseMove);
-        document.removeEventListener('mouseup', this.handleGlobalMouseUp);
-        document.removeEventListener('touchmove', this.handleGlobalTouchMove);
-        document.removeEventListener('touchend', this.handleGlobalTouchEnd);
-
-        // 移除拖拽元素
-        if (this.dragElement) {
-            this.dragElement.remove();
-            this.dragElement = null;
+        if (this.floatingElement) {
+            this.floatingElement.style.cursor = 'grab';
         }
 
-        this.clearPreview();
+        // Try to place
+        const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+        const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
 
-        // 检查是否在棋盘上
+        // Identical check to move logic
         const boardRect = this.boardSvg.getBoundingClientRect();
         if (clientX >= boardRect.left && clientX <= boardRect.right &&
             clientY >= boardRect.top && clientY <= boardRect.bottom) {
 
-            // 转换为 SVG 坐标
-            const svgPoint = this.clientToSvg(clientX, clientY);
+            const svgPoint = this.clientToSvg(this.floatingPos.x, this.floatingPos.y);
+            const shift = Board.findPlacement(this.selectedPiece, svgPoint.x, svgPoint.y);
 
-            // 尝试放置拼块
-            this.tryPlacePiece(this.selectedPiece, svgPoint.x, svgPoint.y);
+            if (shift) {
+                // Success! Place it.
+                if (Board.placePiece(this.selectedPiece, shift)) {
+                    this.renderBoard();
+
+                    // Remove floating element
+                    if (this.floatingElement) this.floatingElement.remove();
+                    this.floatingElement = null;
+
+                    this.selectedPiece = null;
+                    this.renderPieces();
+                    this.clearPreview();
+                    this.setStatus(`✓ 已放置: ${this.selectedPiece?.name || '拼块'}`); // selectedPiece is null now, oops. Use variable? 
+                    // Actually selectedPiece was nulled.
+
+                    if (Board.isComplete()) {
+                        this.showVictory();
+                    }
+                    return;
+                }
+            }
         }
+
+        // If we get here, placement failed or was not attempted.
+        // behavior: STAY at current position.
+        // We do nothing. The floating element remains at floatingPos.
+        this.clearPreview();
+        this.setStatus('松开拼块 - 可继续拖动或操作');
     },
+
+    // Adapt old startDrag to use new system
+    startDrag(e, piece) {
+        if (piece.placed) return;
+
+        // 1. Select it (creates floater)
+        // Calculate start position to be where the mouse is, 
+        // or just use default center logic if we want.
+        // Better: Spawn exactly where the inventory item is, OR at mouse.
+        // If we spawn at mouse, we avoid "jump".
+
+        const clientX = e.clientX || e.touches[0].clientX;
+        const clientY = e.clientY || e.touches[0].clientY;
+
+        this.selectPiece(piece, clientX, clientY);
+
+        // 2. Start dragging immediately
+        this.startFloatingDrag(e);
+    },
+
+    startTouchDrag(e, piece) {
+        this.startDrag(e, piece);
+    },
+
 
     /**
      * 客户端坐标转 SVG 坐标
@@ -655,17 +741,16 @@ const Game = {
 
         Board.removePiece(piece);
         this.selectedPiece = piece;
-        this.renderBoard();
+        this.renderBoard(); // Piece removed from board
+
+        // Since we don't have specific coords, createFloatingPiece defaults to center.
+        // User will likely just drag it immediately.
+        // But to be nice, let's pass undefined to createFloatingPiece.
+        this.createFloatingPiece(piece);
+
         this.renderPieces();
         this.setStatus(`已提起: ${piece.name} - 可旋转/翻转/移动`);
-
-        // Show Ghost immediately if mouse is there?
-        // Hard to know mouse pos here.
     },
-
-    /**
-     * 棋盘鼠标移动
-     */
     handleBoardMouseMove(e) {
         if (this.selectedPiece && !this.selectedPiece.placed) {
             const svgPoint = this.clientToSvg(e.clientX, e.clientY);

@@ -19,18 +19,25 @@
 
         <!-- 主游戏区域 -->
         <main class="game-main">
-            <!-- 左侧：棋盘 -->
-            <div class="board-section">
-                <svg id="board-svg" viewBox="-6 -6 12 12" class="board-svg">
-                    <!-- 棋盘将由 JavaScript 渲染 -->
-                </svg>
+            <!-- 左侧：棋盘 + 拼块 -->
+            <div class="left-column">
+                <div class="board-section">
+                    <svg id="board-svg" viewBox="-6 -6 12 12" class="board-svg">
+                        <!-- 棋盘将由 JavaScript 渲染 -->
+                    </svg>
+                </div>
+
+                <!-- 底部：拼块区域 -->
+                <section class="pieces-section">
+                    <h3>🧩 拼块</h3>
+                    <div id="pieces-container" class="pieces-container">
+                        <!-- 拼块将由 JavaScript 渲染 -->
+                    </div>
+                </section>
             </div>
 
             <!-- 右侧：控制面板（抽屉式） -->
             <aside class="control-panel" id="control-panel">
-                <button class="drawer-toggle" id="drawer-toggle" title="展开/收起菜单">
-                    <span class="toggle-icon">⚙️</span>
-                </button>
 
                 <div class="drawer-content">
                     <div class="panel-section">
@@ -67,22 +74,8 @@
                     </div>
                 </div>
             </aside>
-        </main>
 
-        <!-- 底部：拼块区域 -->
-        <section class="pieces-section">
-            <h3>🧩 拼块</h3>
-            <div id="pieces-container" class="pieces-container">
-                <!-- 拼块将由 JavaScript 渲染 -->
-            </div>
-        </section>
 
-        <!-- 浮动操作面板（选中拼块时显示） -->
-        <div id="piece-actions" class="piece-actions hidden">
-            <button id="btn-rotate" class="action-btn" title="旋转 (R)">🔄</button>
-            <button id="btn-flip" class="action-btn" title="翻转 (F)">↔️</button>
-            <button id="btn-cancel" class="action-btn action-cancel" title="放回 (Esc)">✕</button>
-        </div>
     </div>
 
     <!-- 完成弹窗 -->

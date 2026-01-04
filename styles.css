@@ -97,12 +97,22 @@ body {
     align-items: start;
 }
 
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    /* Prevent flex overflow */
+}
+
 /* 棋盘区域 */
 .board-section {
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow-lg);
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 70vh;
+    margin: 0 auto;
+    filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.2));
     border: 1px solid var(--border);
 }
 
@@ -115,26 +125,19 @@ body {
     filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.2));
 }
 
-/* 控制面板（抽屉式） */
+/* 控制面板 */
 .control-panel {
     position: relative;
     background: var(--bg-card);
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border);
-    transition: width 0.3s ease, padding 0.3s ease;
-    overflow: hidden;
+    padding: 20px;
 }
 
-.control-panel.collapsed {
-    width: 50px;
-    padding: 0;
-}
+/* 移除折叠相关样式 */
+/* .control-panel.collapsed ... */
 
-.control-panel.collapsed .drawer-content {
-    opacity: 0;
-    pointer-events: none;
-}
 
 .drawer-toggle {
     position: absolute;
@@ -165,51 +168,79 @@ body {
 }
 
 .drawer-content {
-    padding: 60px 20px 20px 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    transition: opacity 0.3s ease;
 }
 
-/* 浮动操作面板（选中拼块时显示） */
-.piece-actions {
-    position: absolute;
-    display: flex;
-    gap: 8px;
-    background: rgba(30, 41, 59, 0.95);
-    padding: 8px 12px;
-    border-radius: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    z-index: 200;
+/* 浮动拼块容器 */
+.floating-piece-container {
     pointer-events: auto;
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    /* Allow dragging */
+    touch-action: none;
+    /* Prevent scroll */
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* transition: left 0.05s linear, top 0.05s linear; remove transition for instant follow */
 }
 
-.piece-actions.hidden {
-    display: none;
+.floating-piece-container:active {
+    cursor: grabbing;
+}
+
+.floating-piece-container svg {
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+    animation: float-pulse 2s infinite ease-in-out;
+}
+
+@keyframes float-pulse {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* 浮动操作按钮 */
+.floating-actions {
+    margin-top: 0px;
+    display: flex;
+    gap: 12px;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 8px 16px;
+    border-radius: 99px;
+    backdrop-filter: blur(8px);
+    pointer-events: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .action-btn {
-    width: 44px;
-    height: 44px;
-    border: none;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     color: white;
     font-size: 1.2rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-btn:hover {
-    background: var(--primary-light);
-    transform: scale(1.1);
+    background: var(--primary);
+    transform: scale(1.15);
+    box-shadow: 0 0 10px var(--primary);
 }
 
 .action-btn:active {
@@ -217,13 +248,15 @@ body {
 }
 
 .action-cancel {
-    background: var(--bg-hover);
-    color: var(--text-secondary);
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
 }
 
 .action-cancel:hover {
-    background: var(--error);
+    background: #ef4444;
     color: white;
+    box-shadow: 0 0 10px #ef4444;
 }
 
 /* 移除固定底部空间 */
