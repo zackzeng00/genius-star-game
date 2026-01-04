@@ -51,11 +51,13 @@ const Board = {
                 (t[0] >= 2 && t[1] >= 2 && t[2] >= 2);
         });
 
-        // 排序
+        // 排序：从顶部到底部，与实物游戏编号一致
+        // t[0] 从大到小（顶部 t[0] 大）
+        // 同一行内从左到右
         this.triangles.sort((a, b) => {
-            if (a[0] !== b[0]) return a[0] - b[0];
-            if (a[1] !== b[1]) return b[1] - a[1];
-            return a[2] - b[2];
+            if (a[0] !== b[0]) return b[0] - a[0];  // t[0] 降序（顶部先）
+            if (a[1] !== b[1]) return b[1] - a[1];  // t[1] 降序（左边先）
+            return a[2] - b[2];  // t[2] 升序
         });
 
         // 建立映射
@@ -244,9 +246,9 @@ const Board = {
     /**
      * 渲染棋盘到 SVG
      * @param {SVGElement} svg - SVG 容器
-     * @param {boolean} showNumbers - 是否显示编号
+     * @param {boolean} showNumbers - 是否显示编号（默认true）
      */
-    render(svg, showNumbers = false) {
+    render(svg, showNumbers = true) {
         // 清空现有内容
         svg.innerHTML = '';
 
@@ -268,17 +270,18 @@ const Board = {
 
             boardGroup.appendChild(path);
 
-            // 添加编号
-            if (showNumbers) {
+            // 添加编号（非阻挡位置显示数字）
+            if (showNumbers && !this.isBlocked(index)) {
                 const center = Geometry.triangleCenter(t);
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 text.setAttribute('x', center[0]);
                 text.setAttribute('y', center[1]);
                 text.setAttribute('text-anchor', 'middle');
                 text.setAttribute('dominant-baseline', 'central');
-                text.setAttribute('font-size', '0.3');
-                text.setAttribute('fill', '#a0aec0');
-                text.textContent = index + 1;
+                text.setAttribute('font-size', '0.28');
+                text.setAttribute('fill', '#64748b');
+                text.setAttribute('class', 'board-number');
+                text.textContent = index + 1;  // 1-based 编号
                 boardGroup.appendChild(text);
             }
         });

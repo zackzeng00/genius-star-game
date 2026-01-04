@@ -201,7 +201,7 @@ const Game = {
         this.gameStarted = true;
 
         // 重新渲染棋盘
-        Board.render(this.boardSvg, false);
+        Board.render(this.boardSvg, true);
 
         this.setStatus(`✓ 手动选择: [${roll.join(', ')}]`);
     },
@@ -230,7 +230,7 @@ const Game = {
         this.renderDiceSelectors();
 
         // 重新渲染棋盘
-        Board.render(this.boardSvg, false);
+        Board.render(this.boardSvg, true);
 
         this.setStatus(`🎲 随机骰子: [${roll.join(', ')}]`);
     },
@@ -247,7 +247,7 @@ const Game = {
         this.selectedPiece = null;
 
         // 重新渲染
-        Board.render(this.boardSvg, !this.gameStarted);
+        Board.render(this.boardSvg, true);
         this.renderPieces();
 
         this.setStatus('已重置，可以开始拼图！');
@@ -506,7 +506,7 @@ const Game = {
      * 渲染棋盘（包括已放置的拼块）
      */
     renderBoard() {
-        Board.render(this.boardSvg, false);
+        Board.render(this.boardSvg, true);
 
         // 渲染已放置的拼块
         this.pieces.forEach(piece => {
