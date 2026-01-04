@@ -62,7 +62,7 @@ const Game = {
      * 绑定事件监听器
      */
     bindEvents() {
-        // 按钮事件
+        // 游戏控制按钮
         document.getElementById('btn-roll').addEventListener('click', () => this.rollDice());
         document.getElementById('btn-reset').addEventListener('click', () => this.resetGame());
         document.getElementById('btn-solve').addEventListener('click', () => this.autoSolve());
@@ -71,6 +71,11 @@ const Game = {
             document.getElementById('victory-modal').classList.add('hidden');
             this.rollDice();
         });
+
+        // 拼块操作按钮
+        document.getElementById('btn-rotate').addEventListener('click', () => this.rotatePiece());
+        document.getElementById('btn-flip').addEventListener('click', () => this.flipPiece());
+        document.getElementById('btn-cancel').addEventListener('click', () => this.cancelSelection());
 
         // 键盘事件
         document.addEventListener('keydown', (e) => this.handleKeydown(e));
@@ -83,6 +88,41 @@ const Game = {
         // 触摸事件
         this.boardSvg.addEventListener('touchmove', (e) => this.handleBoardTouchMove(e));
         this.boardSvg.addEventListener('touchend', (e) => this.handleBoardTouchEnd(e));
+    },
+
+    /**
+     * 旋转当前选中的拼块
+     */
+    rotatePiece() {
+        if (!this.selectedPiece || this.selectedPiece.placed) {
+            this.setStatus('请先选中一个拼块');
+            return;
+        }
+        Pieces.rotate(this.selectedPiece);
+        this.renderPieces();
+        this.setStatus(`🔄 已旋转: ${this.selectedPiece.name}`);
+    },
+
+    /**
+     * 翻转当前选中的拼块
+     */
+    flipPiece() {
+        if (!this.selectedPiece || this.selectedPiece.placed) {
+            this.setStatus('请先选中一个拼块');
+            return;
+        }
+        Pieces.reflect(this.selectedPiece);
+        this.renderPieces();
+        this.setStatus(`↔️ 已翻转: ${this.selectedPiece.name}`);
+    },
+
+    /**
+     * 取消选中拼块
+     */
+    cancelSelection() {
+        this.selectedPiece = null;
+        this.renderPieces();
+        this.setStatus('已取消选择');
     },
 
     /**

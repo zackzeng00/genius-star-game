@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <title>🌟 Genius Star 拼图游戏</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="game-container">
         <!-- 标题区域 -->
@@ -42,13 +44,20 @@
                     </button>
                 </div>
 
-                <div class="panel-section">
-                    <h3>⌨️ 快捷键</h3>
-                    <ul class="shortcuts-list">
-                        <li><kbd>R</kbd> 旋转拼块</li>
-                        <li><kbd>F</kbd> 翻转拼块</li>
-                        <li><kbd>Esc</kbd> 取消选中</li>
-                    </ul>
+                <div class="panel-section piece-controls">
+                    <h3>🔧 拼块操作</h3>
+                    <div class="piece-action-btns">
+                        <button id="btn-rotate" class="btn btn-action" title="旋转 (R)">
+                            <span class="btn-icon">🔄</span> 旋转
+                        </button>
+                        <button id="btn-flip" class="btn btn-action" title="翻转 (F)">
+                            <span class="btn-icon">↔️</span> 翻转
+                        </button>
+                        <button id="btn-cancel" class="btn btn-action-secondary" title="取消 (Esc)">
+                            <span class="btn-icon">✕</span> 取消
+                        </button>
+                    </div>
+                    <p class="shortcuts-hint">快捷键: R旋转 / F翻转 / Esc取消</p>
                 </div>
 
                 <div class="panel-section">
@@ -85,4 +94,5 @@
     <script src="js/solver.js"></script>
     <script src="js/game.js"></script>
 </body>
+
 </html>

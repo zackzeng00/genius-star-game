@@ -8,36 +8,36 @@
     --primary: #6366f1;
     --primary-dark: #4f46e5;
     --primary-light: #818cf8;
-    
+
     /* 强调色 */
     --accent: #f59e0b;
     --accent-dark: #d97706;
-    
+
     /* 成功/错误 */
     --success: #10b981;
     --error: #ef4444;
-    
+
     /* 背景色 */
     --bg-dark: #0f172a;
     --bg-card: #1e293b;
     --bg-hover: #334155;
-    
+
     /* 文字色 */
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-    
+
     /* 边框 */
     --border: #334155;
-    
+
     /* 阴影 */
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-    
+
     /* 圆角 */
     --radius: 12px;
     --radius-sm: 8px;
-    
+
     /* 过渡 */
     --transition: all 0.2s ease;
 }
@@ -389,6 +389,7 @@ kbd {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -416,9 +417,12 @@ kbd {
 
 /* 动画 */
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.05);
     }
@@ -428,21 +432,93 @@ kbd {
     animation: pulse 0.5s ease-in-out;
 }
 
+/* 拼块操作按钮 */
+.piece-action-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    font-size: 0.9rem;
+}
+
+.btn-action:hover {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+.btn-action-secondary {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px 12px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.btn-action-secondary:hover {
+    background: #475569;
+    color: var(--text-primary);
+}
+
+.shortcuts-hint {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* 按钮禁用状态 */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
 /* 响应式设计 */
 @media (max-width: 900px) {
     .game-main {
         grid-template-columns: 1fr;
     }
-    
+
     .control-panel {
         order: -1;
         flex-direction: row;
         flex-wrap: wrap;
     }
-    
+
     .panel-section {
         flex: 1;
         min-width: 200px;
+    }
+
+    /* 移动端突出显示拼块操作按钮 */
+    .piece-controls {
+        order: -1;
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .piece-action-btns {
+        justify-content: center;
+    }
+
+    .btn-action,
+    .btn-action-secondary {
+        min-width: 90px;
+        padding: 14px 16px;
+        font-size: 1rem;
+    }
+
+    .shortcuts-hint {
+        display: none;
+        /* 移动端隐藏快捷键提示 */
     }
 }
 
@@ -450,13 +526,24 @@ kbd {
     .game-header h1 {
         font-size: 1.8rem;
     }
-    
+
     .game-container {
         padding: 10px;
     }
-    
+
     .piece-svg {
         width: 60px;
         height: 45px;
+    }
+
+    /* 移动端操作按钮更大 */
+    .btn-action,
+    .btn-action-secondary {
+        padding: 16px 20px;
+        font-size: 1.1rem;
+    }
+
+    .piece-action-btns {
+        gap: 10px;
     }
 }
