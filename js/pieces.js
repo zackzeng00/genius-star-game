@@ -12,57 +12,57 @@ const Pieces = {
         {
             name: '单三角',  // 蓝色单个三角形
             triangles: [[0, 0, 0]],
-            color: '#1e90ff'  // dodgerblue
+            color: '#00008B'  // darkblue
         },
         {
             name: '双三角',  // 黄色菱形
             triangles: [[0, 0, 0], [1, 0, 0]],
-            color: '#ffd700'  // gold
+            color: '#FFC107'  // amber
         },
         {
             name: '三联直A',  // 浅蓝色三联（梯形）
             triangles: [[0, 0, 1], [0, 0, 0], [1, 0, 0]],
-            color: '#00bfff'  // deepskyblue
+            color: '#87CEEB'  // skyblue
         },
         {
             name: '三联直B',  // 深蓝色三联（梯形）
             triangles: [[0, 0, 1], [0, 0, 0], [1, 0, 0]],
-            color: '#4169e1'  // royalblue
+            color: '#00BFFF'  // deepskyblue
         },
         {
             name: '四联菱',  // 橙色四联菱形
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1]],
-            color: '#ff8c00'  // darkorange
+            color: '#9C27B0'  // purple
         },
         {
             name: '四联直',  // 粉色四联直条
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0]],
-            color: '#ff69b4'  // hotpink
+            color: '#E91E63'  // pink
         },
         {
             name: '四联蝴蝶',  // 棕色蝴蝶结形
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, 0, -1]],
-            color: '#8b4513'  // saddlebrown
+            color: '#FF9800'  // orange
         },
         {
             name: '五联直',  // 绿色五联直条
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0], [2, -2, 0]],
-            color: '#32cd32'  // limegreen
+            color: '#F44336'  // red
         },
         {
             name: '五联弯',  // 红色五联弯
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0], [2, -1, -1]],
-            color: '#dc143c'  // crimson
+            color: '#8BC34A'  // lightgreen
         },
         {
             name: '五联菱',  // 青绿色五联大菱形
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1], [0, -1, 1]],
-            color: '#20b2aa'  // lightseagreen
+            color: '#1B5E20'  // darkgreen
         },
         {
             name: '五联T',  // 紫色五联T形
             triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, 0, -1], [2, -1, 0]],
-            color: '#9370db'  // mediumpurple
+            color: '#795548'  // brown
         }
     ],
 
