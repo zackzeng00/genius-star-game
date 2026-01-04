@@ -8,7 +8,6 @@ const Game = {
     // 游戏状态
     pieces: [],           // 所有拼块
     selectedPiece: null,  // 当前选中的拼块
-    useStar: true,        // 是否使用星形拼块
     gameStarted: false,   // 游戏是否已开始
 
     // DOM 元素
@@ -44,8 +43,8 @@ const Game = {
         // 初始化棋盘
         Board.init();
 
-        // 创建拼块
-        this.pieces = Pieces.createAll(this.useStar);
+        // 创建拼块（11个，包含两个三联梯形）
+        this.pieces = Pieces.createAll();
 
         // 渲染初始状态
         Board.render(this.boardSvg, true);
@@ -516,7 +515,7 @@ const Game = {
             Board.reset();
 
             // 求解
-            const solution = Solver.solve(this.pieces, this.useStar);
+            const solution = Solver.solve(this.pieces);
 
             if (solution) {
                 // 应用解决方案

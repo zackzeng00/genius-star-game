@@ -8,12 +8,11 @@ const Solver = {
     /**
      * 求解当前棋盘状态
      * @param {Array} pieces - 可用拼块数组
-     * @param {boolean} useStar - 是否使用星形拼块
      * @returns {Array|null} - 解决方案或 null
      */
-    solve(pieces, useStar = true) {
+    solve(pieces) {
         // 生成所有可能的放置方式
-        const fits = this.generateFits(pieces, useStar);
+        const fits = this.generateFits(pieces);
 
         if (fits.length === 0) {
             return null;
@@ -26,10 +25,6 @@ const Solver = {
         const solution = this.dlx(matrix, colCount);
 
         if (!solution) {
-            // 如果没有找到解且使用了星形，尝试非星形版本
-            if (useStar) {
-                return this.solve(pieces, false);
-            }
             return null;
         }
 
@@ -40,7 +35,7 @@ const Solver = {
     /**
      * 生成所有可能的拼块放置方式
      */
-    generateFits(pieces, useStar) {
+    generateFits(pieces) {
         const fits = [];
         const shifts = Board.getPossibleShifts();
 

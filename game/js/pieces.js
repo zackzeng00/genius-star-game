@@ -5,91 +5,82 @@
  */
 
 const Pieces = {
-    // 拼块定义 - 每个拼块由若干三角形组成
+    // 拼块定义 - 根据真实游戏调整
     // 坐标使用三角形坐标系 [t0, t1, t2]
+    // 颜色参考实物照片
     definitions: [
         {
-            name: '单三角',
+            name: '单三角',  // 蓝色单个三角形
             triangles: [[0, 0, 0]],
-            color: '#4169e1'  // royalblue
+            color: '#1e90ff'  // dodgerblue
         },
         {
-            name: '双三角',
+            name: '双三角',  // 黄色菱形
             triangles: [[0, 0, 0], [1, 0, 0]],
-            color: '#ffd700'  // yellow/gold
+            color: '#ffd700'  // gold
         },
         {
-            name: '四联直',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0]],
-            color: '#ff69b4'  // pink
-        },
-        {
-            name: '五联直',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0], [2, -2, 0]],
-            color: '#dc143c'  // red
-        },
-        {
-            name: '五联弯',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0], [2, -1, -1]],
-            color: '#7cfc00'  // lawngreen
-        },
-        {
-            name: '四联菱',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1]],
-            color: '#ffa500'  // orange
-        },
-        {
-            name: '五联菱',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1], [0, -1, 1]],
-            color: '#006400'  // darkgreen
-        },
-        {
-            name: '四联T',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, 0, -1]],
-            color: '#9370db'  // purple
-        },
-        {
-            name: '五联T',
-            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, 0, -1], [2, -1, 0]],
-            color: '#8b4513'  // saddlebrown
-        },
-        {
-            name: '金星',  // 六边形，带星形标记
-            triangles: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1], [0, -1, 1]],
-            color: '#87ceeb',  // skyblue
-            isStar: true
-        }
-    ],
-
-    // 备用：两个三联直条（非星形版本）
-    alternativeDefinitions: [
-        {
-            name: '三联直A',
+            name: '三联直A',  // 浅蓝色三联（梯形）
             triangles: [[0, 0, 1], [0, 0, 0], [1, 0, 0]],
             color: '#00bfff'  // deepskyblue
         },
         {
-            name: '三联直B',
+            name: '三联直B',  // 深蓝色三联（梯形）
             triangles: [[0, 0, 1], [0, 0, 0], [1, 0, 0]],
-            color: '#87cefa'  // lightskyblue
+            color: '#4169e1'  // royalblue
+        },
+        {
+            name: '四联菱',  // 橙色四联菱形
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1]],
+            color: '#ff8c00'  // darkorange
+        },
+        {
+            name: '四联直',  // 粉色四联直条
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0]],
+            color: '#ff69b4'  // hotpink
+        },
+        {
+            name: '四联蝴蝶',  // 棕色蝴蝶结形
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, 0, -1]],
+            color: '#8b4513'  // saddlebrown
+        },
+        {
+            name: '五联直',  // 绿色五联直条
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0], [2, -2, 0]],
+            color: '#32cd32'  // limegreen
+        },
+        {
+            name: '五联弯',  // 红色五联弯
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [2, -1, 0], [2, -1, -1]],
+            color: '#dc143c'  // crimson
+        },
+        {
+            name: '五联菱',  // 青绿色五联大菱形
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1], [0, -1, 1]],
+            color: '#20b2aa'  // lightseagreen
+        },
+        {
+            name: '五联T',  // 紫色五联T形
+            triangles: [[0, 0, 0], [1, 0, 0], [1, -1, 0], [1, 0, -1], [2, -1, 0]],
+            color: '#9370db'  // mediumpurple
         }
     ],
+
+    // 备用：金星六边形（可选模式）
+    starDefinition: {
+        name: '金星',  // 六边形，带星形标记
+        triangles: [[0, 0, 1], [0, 0, 0], [1, 0, 0], [1, -1, 0], [1, -1, 1], [0, -1, 1]],
+        color: '#87ceeb',  // skyblue
+        isStar: true
+    },
 
     /**
      * 创建拼块实例
      * @param {number} index - 拼块索引
-     * @param {boolean} useStar - 是否使用星形拼块
      * @returns {Object} - 拼块实例
      */
-    create(index, useStar = true) {
-        let def;
-        if (index < 9) {
-            def = this.definitions[index];
-        } else if (index === 9) {
-            def = useStar ? this.definitions[9] : this.alternativeDefinitions[0];
-        } else {
-            def = this.alternativeDefinitions[1];
-        }
+    create(index) {
+        const def = this.definitions[index];
 
         return {
             index: index,
@@ -106,15 +97,13 @@ const Pieces = {
     },
 
     /**
-     * 创建所有拼块
-     * @param {boolean} useStar - 是否使用星形拼块
+     * 创建所有拼块（11个，包含两个三联梯形）
      * @returns {Array} - 拼块实例数组
      */
-    createAll(useStar = true) {
+    createAll() {
         const pieces = [];
-        const count = useStar ? 10 : 11;
-        for (let i = 0; i < count; i++) {
-            pieces.push(this.create(i, useStar));
+        for (let i = 0; i < this.definitions.length; i++) {
+            pieces.push(this.create(i));
         }
         return pieces;
     },
