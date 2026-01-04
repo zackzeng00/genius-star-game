@@ -1,49 +1,65 @@
-# The Genius Star Solver
+# 🌟 Genius Star 拼图游戏
 
-[Run the solver now!](https://geniusstar.johnrudge.com)
+一个交互式的网页拼图游戏，基于 [The Genius Star](https://www.happypuzzle.co.uk/word-maths-and-shape-games/the-genius-star) 实现。
 
-This is a simple python solver for [The Genius Star](https://www.happypuzzle.co.uk/word-maths-and-shape-games/the-genius-star), a tiling puzzle made by the Happy Puzzle Company. The game involves tiling a star-shaped grid of triangles with a set of [polyiamond](https://en.wikipedia.org/wiki/Polyiamond) pieces. Seven dice are rolled to indicate certain triangles which are blocked, and the other pieces must be fitted around these blocks. The tiling problem can be cast as an [exact cover problem](https://en.wikipedia.org/wiki/Exact_cover) and the code here uses the python [xcover package](https://github.com/johnrudge/xcover) to do the solving. A good introduction to the theory behind the exact cover formulation can be found in [Donald Knuth's paper](https://arxiv.org/abs/cs/0011047v1).
+![游戏截图](./docs/screenshot.png)
 
-## Requirements
+## ✨ 功能特性
 
-The code requires python 3.7 or higher with the `numpy`, `matplotlib`, and `xcover` packages. The GUI requires the `nicegui` package.
+- 🎲 **摇骰子** - 随机生成7个阻挡位置
+- 🖱️ **拖拽拼块** - 选中拼块拖放到棋盘
+- 🔄 **旋转/翻转** - 键盘快捷键调整拼块方向
+- 💡 **自动求解** - DLX算法秒级求解
+- 📱 **响应式** - 支持移动端
 
-## Example usage
+## 🚀 快速开始
+
+### 在线体验
+访问：[https://your-username.github.io/genius-star-game](https://your-username.github.io/genius-star-game)
+
+### 本地运行
+```bash
+cd game
+python3 -m http.server 8080
+# 或使用任何静态文件服务器
+```
+然后访问 http://localhost:8080
+
+## 🎮 操作说明
+
+| 操作 | 方式 |
+|------|------|
+| 选择拼块 | 点击 |
+| 移动拼块 | 拖拽到棋盘 |
+| 旋转 | 按 `R` 键 |
+| 翻转 | 按 `F` 键 |
+| 取消选择 | 按 `Esc` 键 |
+
+## 📁 项目结构
 
 ```
-from genius_star import Game
-
-roll = [4, 10, 15, 18, 28, 33, 37]
-game = Game(roll)
-solution = game.solve()
-solution.plot()
+├── game/
+│   ├── index.html      # 游戏页面
+│   ├── styles.css      # 样式
+│   └── js/
+│       ├── geometry.js # 几何计算
+│       ├── pieces.js   # 拼块定义
+│       ├── board.js    # 棋盘逻辑
+│       ├── solver.js   # DLX求解器
+│       └── game.js     # 游戏主逻辑
+├── ROADMAP.md          # 开发路线图
+└── LICENSE             # 许可证
 ```
 
-![Screenshot](example_solution.svg)
+## 🗺️ 开发路线
 
-## Jupyter notebook
+查看 [ROADMAP.md](./ROADMAP.md) 了解后续开发计划。
 
-There is a [Jupyter notebook](description.ipynb) describing the game and algorithm, which can be run directly in a web browser using services such as Colab or Binder. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1SNbcegEdsjfifolCRRMD0PY8gWDynWIb?usp=sharing)
-      [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/johnrudge/genius_star/HEAD?labpath=description.ipynb)
+## 📄 许可证
 
-## GUI
+[LGPL-3.0](./LICENSE)
 
-There is a web-based GUI for the solver, which can be run with
-```
-python3 gui.py
-```
-or by visiting [https://geniusstar.johnrudge.com](https://geniusstar.johnrudge.com).
+## 🙏 致谢
 
-## All solutions
-
-`solve_all.py` performs an exhaustive search of all 165,888 possible puzzles from rolling the dice. It takes around a minute to run, and shows that 97,422 of the combinations can be solved with a star (58.7%, slightly higher than the manufacturer's quoted figure of 57.4%). The routine exploits the symmetry of the board, namely that some dice rolls lead to puzzles which are reflections or rotations of other dice rolls e.g. the roll [4, 10, 15, 18, 28, 33, 37] is equivalent to [1, 7, 13, 22, 29, 31, 38]. Accounting for symmetry there are 24,192 unique puzzles that can be obtained with the dice (of which 14,149 have the star).
-
-If you can place the blockers anywhere on the board there are many more possible puzzles, but they do not all have solutions. There are 73,629,072 possible placements of the seven blockers, of which 51,837,678 are solvable puzzles (70.4%) and 22,651,032 have the star (43.7% of the solvable). Accounting for symmetry, there are 6,140,978 blocker placements, with 4,322,975 solvable and 1,888,833 with the star. The puzzles given by the dice represent only 0.32% of all the solvable puzzles by placing the seven blockers on the board.
-      
-## License
-
-This software is licenced under the GNU Lesser General Public License v3.0.
-
-## Author
-
-John F. Rudge
+- 原始 Python 求解器：[johnrudge/genius_star](https://github.com/johnrudge/genius_star)
+- 精确覆盖算法：[Donald Knuth's Dancing Links](https://arxiv.org/abs/cs/0011047v1)
