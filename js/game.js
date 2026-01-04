@@ -79,6 +79,11 @@ const Game = {
             this.rollDice();
         });
 
+        // 抽屉切换按钮
+        document.getElementById('drawer-toggle').addEventListener('click', () => {
+            document.getElementById('control-panel').classList.toggle('collapsed');
+        });
+
         // 拼块操作按钮
         document.getElementById('btn-rotate').addEventListener('click', () => this.rotatePiece());
         document.getElementById('btn-flip').addEventListener('click', () => this.flipPiece());
@@ -131,6 +136,7 @@ const Game = {
         this.selectedPiece = null;
         this.renderPieces();
         this.clearPreview();
+        this.hidePieceActions();
         this.setStatus('已取消选择');
     },
 
@@ -247,6 +253,7 @@ const Game = {
         // 重置所有拼块
         this.pieces.forEach(piece => Pieces.reset(piece));
         this.selectedPiece = null;
+        this.hidePieceActions();
 
         // 重新渲染
         Board.render(this.boardSvg, true);
@@ -310,7 +317,45 @@ const Game = {
 
         this.selectedPiece = piece;
         this.renderPieces();
-        this.setStatus(`已选中: ${piece.name}`);
+        this.showPieceActions(piece);
+        this.setStatus(`已选中: ${piece.name} - 可旋转/翻转/放回`);
+    },
+
+    /**
+     * 显示浮动操作面板
+     */
+    showPieceActions(piece) {
+        const actionsEl = document.getElementById('piece-actions');
+        actionsEl.classList.remove('hidden');
+
+        // 找到选中拼块的 DOM 元素
+        const pieceWrapper = this.piecesContainer.querySelector(`.piece-wrapper[data-piece-index="${piece.index}"]`);
+        if (pieceWrapper) {
+            const rect = pieceWrapper.getBoundingClientRect();
+            // 显示在拼块上方
+            actionsEl.style.left = `${rect.left + rect.width / 2 - actionsEl.offsetWidth / 2}px`;
+            actionsEl.style.top = `${rect.top - actionsEl.offsetHeight - 10 + window.scrollY}px`;
+
+            // 确保不超出屏幕
+            const actionsRect = actionsEl.getBoundingClientRect();
+            if (actionsRect.left < 10) {
+                actionsEl.style.left = '10px';
+            }
+            if (actionsRect.right > window.innerWidth - 10) {
+                actionsEl.style.left = `${window.innerWidth - actionsEl.offsetWidth - 10}px`;
+            }
+            if (actionsRect.top < 10) {
+                // 如果上方空间不够，显示在下方
+                actionsEl.style.top = `${rect.bottom + 10 + window.scrollY}px`;
+            }
+        }
+    },
+
+    /**
+     * 隐藏浮动操作面板
+     */
+    hidePieceActions() {
+        document.getElementById('piece-actions').classList.add('hidden');
     },
 
     /**
@@ -554,6 +599,7 @@ const Game = {
                 this.selectedPiece = null; // Deselect after placing
                 this.renderPieces();
                 this.clearPreview();
+                this.hidePieceActions();
                 this.setStatus(`✓ 已放置: ${piece.name}`);
 
                 // 检查是否完成
@@ -725,6 +771,7 @@ const Game = {
                 this.selectedPiece = null;
                 this.renderPieces();
                 this.clearPreview();
+                this.hidePieceActions();
                 this.setStatus('已取消选择');
                 break;
         }

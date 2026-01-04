@@ -26,54 +26,44 @@
                 </svg>
             </div>
 
-            <!-- 右侧：控制面板 -->
-            <aside class="control-panel">
-                <div class="panel-section">
-                    <h3>🎮 游戏控制</h3>
-                    <button id="btn-roll" class="btn btn-primary">
-                        <span class="btn-icon">🎲</span> 随机骰子
-                    </button>
-                    <button id="btn-apply-dice" class="btn btn-secondary">
-                        <span class="btn-icon">✓</span> 应用选择
-                    </button>
-                    <button id="btn-reset" class="btn btn-secondary">
-                        <span class="btn-icon">🔄</span> 重置
-                    </button>
-                    <button id="btn-solve" class="btn btn-accent">
-                        <span class="btn-icon">💡</span> 自动求解
-                    </button>
-                    <button id="btn-check" class="btn btn-success">
-                        <span class="btn-icon">✓</span> 检查
-                    </button>
-                </div>
+            <!-- 右侧：控制面板（抽屉式） -->
+            <aside class="control-panel" id="control-panel">
+                <button class="drawer-toggle" id="drawer-toggle" title="展开/收起菜单">
+                    <span class="toggle-icon">⚙️</span>
+                </button>
 
-                <div class="panel-section dice-section">
-                    <h3>🎲 骰子选择 <span class="dice-hint">（点击选择）</span></h3>
-                    <div id="dice-selectors" class="dice-selectors">
-                        <!-- 骰子选择器由 JavaScript 渲染 -->
-                    </div>
-                </div>
-
-                <div class="panel-section piece-controls">
-                    <h3>🔧 拼块操作</h3>
-                    <div class="piece-action-btns">
-                        <button id="btn-rotate" class="btn btn-action" title="旋转 (R)">
-                            <span class="btn-icon">🔄</span> 旋转
+                <div class="drawer-content">
+                    <div class="panel-section">
+                        <h3>🎮 游戏控制</h3>
+                        <button id="btn-roll" class="btn btn-primary">
+                            <span class="btn-icon">🎲</span> 随机骰子
                         </button>
-                        <button id="btn-flip" class="btn btn-action" title="翻转 (F)">
-                            <span class="btn-icon">↔️</span> 翻转
+                        <button id="btn-apply-dice" class="btn btn-secondary">
+                            <span class="btn-icon">✓</span> 应用选择
                         </button>
-                        <button id="btn-cancel" class="btn btn-action-secondary" title="取消 (Esc)">
-                            <span class="btn-icon">✕</span> 取消
+                        <button id="btn-reset" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span> 重置
+                        </button>
+                        <button id="btn-solve" class="btn btn-accent">
+                            <span class="btn-icon">💡</span> 自动求解
+                        </button>
+                        <button id="btn-check" class="btn btn-success">
+                            <span class="btn-icon">✓</span> 检查
                         </button>
                     </div>
-                    <p class="shortcuts-hint">快捷键: R旋转 / F翻转 / Esc取消</p>
-                </div>
 
-                <div class="panel-section">
-                    <h3>📊 状态</h3>
-                    <div id="status-message" class="status-message">
-                        点击「摇骰子」开始游戏！
+                    <div class="panel-section dice-section">
+                        <h3>🎲 骰子选择 <span class="dice-hint">（点击选择）</span></h3>
+                        <div id="dice-selectors" class="dice-selectors">
+                            <!-- 骰子选择器由 JavaScript 渲染 -->
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <h3>📊 状态</h3>
+                        <div id="status-message" class="status-message">
+                            点击「摇骰子」开始游戏！
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -86,6 +76,13 @@
                 <!-- 拼块将由 JavaScript 渲染 -->
             </div>
         </section>
+
+        <!-- 浮动操作面板（选中拼块时显示） -->
+        <div id="piece-actions" class="piece-actions hidden">
+            <button id="btn-rotate" class="action-btn" title="旋转 (R)">🔄</button>
+            <button id="btn-flip" class="action-btn" title="翻转 (F)">↔️</button>
+            <button id="btn-cancel" class="action-btn action-cancel" title="放回 (Esc)">✕</button>
+        </div>
     </div>
 
     <!-- 完成弹窗 -->
