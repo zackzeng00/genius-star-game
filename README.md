@@ -15,7 +15,12 @@
 
 ## 🚀 快速开始
 
-### 方式一：本地运行
+### 在线体验（推荐）
+直接访问：**https://zackzeng00.github.io/genius-star-game**
+
+手机扫码即可玩！
+
+### 本地运行
 
 1. **克隆仓库**
    ```bash
@@ -26,14 +31,13 @@
 2. **启动本地服务器**
    ```bash
    # 使用 Python
-   cd game
    python3 -m http.server 8080
    
    # 或使用 Node.js
-   npx serve game
+   npx serve .
    
    # 或使用 PHP
-   php -S localhost:8080 -t game
+   php -S localhost:8080
    ```
 
 3. **打开浏览器**
@@ -82,15 +86,14 @@
 
 ```
 genius-star-game/
-├── game/
-│   ├── index.html      # 游戏主页面
-│   ├── styles.css      # 样式表（暗色主题）
-│   └── js/
-│       ├── geometry.js # 三角形坐标系几何计算
-│       ├── pieces.js   # 10种拼块的定义和渲染
-│       ├── board.js    # 星形棋盘逻辑
-│       ├── solver.js   # DLX精确覆盖算法求解器
-│       └── game.js     # 游戏主逻辑和交互
+├── index.html          # 游戏主页面
+├── styles.css          # 样式表（暗色主题）
+├── js/
+│   ├── geometry.js     # 三角形坐标系几何计算
+│   ├── pieces.js       # 11种拼块的定义和渲染
+│   ├── board.js        # 星形棋盘逻辑
+│   ├── solver.js       # DLX精确覆盖算法求解器
+│   └── game.js         # 游戏主逻辑和交互
 ├── ROADMAP.md          # 开发路线图
 ├── LICENSE             # LGPL-3.0 许可证
 └── README.md           # 本文档
