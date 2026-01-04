@@ -474,6 +474,75 @@ kbd {
     text-align: center;
 }
 
+/* 骰子选择器 */
+.dice-section {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin: -8px;
+}
+
+.dice-hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: normal;
+    text-transform: none;
+}
+
+.dice-selectors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dice-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dice-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 50px;
+}
+
+.dice-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+}
+
+.dice-option {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dice-option:hover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+.dice-option.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
 /* 按钮禁用状态 */
 .btn:disabled {
     opacity: 0.5;

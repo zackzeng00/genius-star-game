@@ -21,15 +21,19 @@ const Game = {
     dragElement: null,
 
     // 骰子定义（与 Python 版本一致）
+    // 每组是一个骰子的所有可能值
     diceNumbers: [
-        [1, 5, 15, 34, 44, 48],
-        [2, 4, 7, 8, 9, 11, 16, 17],
-        [10, 27, 31],
-        [12, 13, 23, 24, 32, 33, 41, 42],
-        [18, 22, 39],
-        [19, 20, 21, 28, 29, 30],
-        [25, 26, 36, 37, 38, 40, 45, 47]
+        [1, 5, 15, 34, 44, 48],           // 骰子1: 6面
+        [2, 4, 7, 8, 9, 11, 16, 17],      // 骰子2: 8面
+        [10, 27, 31],                      // 骰子3: 3面
+        [12, 13, 23, 24, 32, 33, 41, 42], // 骰子4: 8面
+        [18, 22, 39],                      // 骰子5: 3面
+        [19, 20, 21, 28, 29, 30],         // 骰子6: 6面
+        [25, 26, 36, 37, 38, 40, 45, 47]  // 骰子7: 8面
     ],
+
+    // 当前选中的骰子值（每个骰子一个）
+    selectedDice: [null, null, null, null, null, null, null],
 
     /**
      * 初始化游戏
@@ -45,6 +49,9 @@ const Game = {
 
         // 创建拼块（11个，包含两个三联梯形）
         this.pieces = Pieces.createAll();
+
+        // 渲染骰子选择器
+        this.renderDiceSelectors();
 
         // 渲染初始状态
         Board.render(this.boardSvg, true);
@@ -63,6 +70,7 @@ const Game = {
     bindEvents() {
         // 游戏控制按钮
         document.getElementById('btn-roll').addEventListener('click', () => this.rollDice());
+        document.getElementById('btn-apply-dice').addEventListener('click', () => this.applySelectedDice());
         document.getElementById('btn-reset').addEventListener('click', () => this.resetGame());
         document.getElementById('btn-solve').addEventListener('click', () => this.autoSolve());
         document.getElementById('btn-check').addEventListener('click', () => this.checkSolution());
@@ -125,15 +133,65 @@ const Game = {
     },
 
     /**
-     * 摇骰子 - 生成新谜题
+     * 渲染骰子选择器
      */
-    rollDice() {
-        // 随机选择每个骰子的值
-        const roll = this.diceNumbers.map(dice => {
-            const idx = Math.floor(Math.random() * dice.length);
-            return dice[idx];
+    renderDiceSelectors() {
+        const container = document.getElementById('dice-selectors');
+        container.innerHTML = '';
+
+        this.diceNumbers.forEach((dice, diceIndex) => {
+            const row = document.createElement('div');
+            row.className = 'dice-row';
+
+            const label = document.createElement('span');
+            label.className = 'dice-label';
+            label.textContent = `骰子${diceIndex + 1}:`;
+            row.appendChild(label);
+
+            const options = document.createElement('div');
+            options.className = 'dice-options';
+
+            dice.forEach(value => {
+                const btn = document.createElement('button');
+                btn.className = 'dice-option';
+                btn.textContent = value;
+                btn.dataset.diceIndex = diceIndex;
+                btn.dataset.value = value;
+
+                if (this.selectedDice[diceIndex] === value) {
+                    btn.classList.add('selected');
+                }
+
+                btn.addEventListener('click', () => this.selectDiceValue(diceIndex, value));
+                options.appendChild(btn);
+            });
+
+            row.appendChild(options);
+            container.appendChild(row);
         });
-        roll.sort((a, b) => a - b);
+    },
+
+    /**
+     * 选择骰子值
+     */
+    selectDiceValue(diceIndex, value) {
+        this.selectedDice[diceIndex] = value;
+        this.renderDiceSelectors();
+    },
+
+    /**
+     * 应用手动选择的骰子
+     */
+    applySelectedDice() {
+        // 检查是否所有骰子都已选择
+        const allSelected = this.selectedDice.every(v => v !== null);
+        if (!allSelected) {
+            this.setStatus('⚠️ 请先选择全部7个骰子的值');
+            return;
+        }
+
+        // 获取选中的值并排序
+        const roll = [...this.selectedDice].sort((a, b) => a - b);
 
         // 重置游戏状态
         this.resetGame();
@@ -145,7 +203,36 @@ const Game = {
         // 重新渲染棋盘
         Board.render(this.boardSvg, false);
 
-        this.setStatus(`🎲 骰子结果: [${roll.join(', ')}]`);
+        this.setStatus(`✓ 手动选择: [${roll.join(', ')}]`);
+    },
+
+    /**
+     * 摇骰子 - 随机生成新谜题
+     */
+    rollDice() {
+        // 随机选择每个骰子的值
+        const roll = this.diceNumbers.map((dice, index) => {
+            const idx = Math.floor(Math.random() * dice.length);
+            const value = dice[idx];
+            this.selectedDice[index] = value;  // 同步更新选中状态
+            return value;
+        });
+        roll.sort((a, b) => a - b);
+
+        // 重置游戏状态
+        this.resetGame();
+
+        // 设置阻挡位置
+        Board.setBlocked(roll);
+        this.gameStarted = true;
+
+        // 更新骰子选择器显示
+        this.renderDiceSelectors();
+
+        // 重新渲染棋盘
+        Board.render(this.boardSvg, false);
+
+        this.setStatus(`🎲 随机骰子: [${roll.join(', ')}]`);
     },
 
     /**

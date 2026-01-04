@@ -31,7 +31,10 @@
                 <div class="panel-section">
                     <h3>🎮 游戏控制</h3>
                     <button id="btn-roll" class="btn btn-primary">
-                        <span class="btn-icon">🎲</span> 摇骰子
+                        <span class="btn-icon">🎲</span> 随机骰子
+                    </button>
+                    <button id="btn-apply-dice" class="btn btn-secondary">
+                        <span class="btn-icon">✓</span> 应用选择
                     </button>
                     <button id="btn-reset" class="btn btn-secondary">
                         <span class="btn-icon">🔄</span> 重置
@@ -42,6 +45,13 @@
                     <button id="btn-check" class="btn btn-success">
                         <span class="btn-icon">✓</span> 检查
                     </button>
+                </div>
+
+                <div class="panel-section dice-section">
+                    <h3>🎲 骰子选择 <span class="dice-hint">（点击选择）</span></h3>
+                    <div id="dice-selectors" class="dice-selectors">
+                        <!-- 骰子选择器由 JavaScript 渲染 -->
+                    </div>
                 </div>
 
                 <div class="panel-section piece-controls">
