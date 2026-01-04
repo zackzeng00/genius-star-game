@@ -331,9 +331,16 @@ const Board = {
     },
 
     /**
-     * 重置棋盘（清除放置的拼块）
+     * 重置棋盘（清除放置的拼块，保留阻挡）
      */
     reset() {
+        this.clearPieces();
+    },
+
+    /**
+     * 清除棋盘上的拼块（保留阻挡）
+     */
+    clearPieces() {
         this.occupiedIndices = [];
     }
 };

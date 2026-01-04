@@ -253,13 +253,18 @@ const Game = {
      * 重置游戏
      */
     resetGame() {
-        // 重置棋盘
-        Board.reset();
+        // 重置棋盘 (仅清除拼块, 保留阻挡)
+        Board.clearPieces();
 
         // 重置所有拼块
         this.pieces.forEach(piece => Pieces.reset(piece));
         this.selectedPiece = null;
-        this.hidePieceActions();
+
+        // Remove floating element if exists
+        if (this.floatingElement) {
+            this.floatingElement.remove();
+            this.floatingElement = null;
+        }
 
         // 重新渲染
         Board.render(this.boardSvg, true);
@@ -685,7 +690,13 @@ const Game = {
                 this.selectedPiece = null; // Deselect after placing
                 this.renderPieces();
                 this.clearPreview();
-                this.hidePieceActions();
+
+                // Remove floating element if exists
+                if (this.floatingElement) {
+                    this.floatingElement.remove();
+                    this.floatingElement = null;
+                }
+
                 this.setStatus(`✓ 已放置: ${piece.name}`);
 
                 // 检查是否完成
@@ -853,11 +864,7 @@ const Game = {
                 break;
             case 'escape':
                 // 取消选择
-                this.selectedPiece = null;
-                this.renderPieces();
-                this.clearPreview();
-                this.hidePieceActions();
-                this.setStatus('已取消选择');
+                this.cancelSelection();
                 break;
         }
     },
@@ -882,9 +889,13 @@ const Game = {
                 }
                 Pieces.reset(piece);
             });
-            Board.reset();
+
+
+            // 仅清除拼块，保留阻挡供求解器使用
+            Board.clearPieces();
 
             // 求解
+
             const solution = Solver.solve(this.pieces);
 
             if (solution) {
