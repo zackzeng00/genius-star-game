@@ -1,0 +1,6 @@
+###### Required python packages ######
+numpy
+matplotlib
+xcover
+nicegui
+

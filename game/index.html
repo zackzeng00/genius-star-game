@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Genius Star 拼图游戏 - 交互式六角星拼图">
+    <title>🌟 Genius Star 拼图游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 标题区域 -->
+        <header class="game-header">
+            <h1>🌟 Genius Star</h1>
+            <p class="subtitle">天才之星拼图游戏</p>
+        </header>
+
+        <!-- 主游戏区域 -->
+        <main class="game-main">
+            <!-- 左侧：棋盘 -->
+            <div class="board-section">
+                <svg id="board-svg" viewBox="-6 -6 12 12" class="board-svg">
+                    <!-- 棋盘将由 JavaScript 渲染 -->
+                </svg>
+            </div>
+
+            <!-- 右侧：控制面板 -->
+            <aside class="control-panel">
+                <div class="panel-section">
+                    <h3>🎮 游戏控制</h3>
+                    <button id="btn-roll" class="btn btn-primary">
+                        <span class="btn-icon">🎲</span> 摇骰子
+                    </button>
+                    <button id="btn-reset" class="btn btn-secondary">
+                        <span class="btn-icon">🔄</span> 重置
+                    </button>
+                    <button id="btn-solve" class="btn btn-accent">
+                        <span class="btn-icon">💡</span> 自动求解
+                    </button>
+                    <button id="btn-check" class="btn btn-success">
+                        <span class="btn-icon">✓</span> 检查
+                    </button>
+                </div>
+
+                <div class="panel-section">
+                    <h3>⌨️ 快捷键</h3>
+                    <ul class="shortcuts-list">
+                        <li><kbd>R</kbd> 旋转拼块</li>
+                        <li><kbd>F</kbd> 翻转拼块</li>
+                        <li><kbd>Esc</kbd> 取消选中</li>
+                    </ul>
+                </div>
+
+                <div class="panel-section">
+                    <h3>📊 状态</h3>
+                    <div id="status-message" class="status-message">
+                        点击「摇骰子」开始游戏！
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- 底部：拼块区域 -->
+        <section class="pieces-section">
+            <h3>🧩 拼块</h3>
+            <div id="pieces-container" class="pieces-container">
+                <!-- 拼块将由 JavaScript 渲染 -->
+            </div>
+        </section>
+    </div>
+
+    <!-- 完成弹窗 -->
+    <div id="victory-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🎉 恭喜完成！</h2>
+            <p>你成功完成了拼图！</p>
+            <button id="btn-new-game" class="btn btn-primary">开始新游戏</button>
+        </div>
+    </div>
+
+    <!-- JavaScript 模块 -->
+    <script src="js/geometry.js"></script>
+    <script src="js/pieces.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/solver.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+/* ================================
+   Genius Star 拼图游戏 - 样式表
+   ================================ */
+
+/* CSS 变量 - 主题色彩 */
+:root {
+    /* 主色调 */
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    
+    /* 强调色 */
+    --accent: #f59e0b;
+    --accent-dark: #d97706;
+    
+    /* 成功/错误 */
+    --success: #10b981;
+    --error: #ef4444;
+    
+    /* 背景色 */
+    --bg-dark: #0f172a;
+    --bg-card: #1e293b;
+    --bg-hover: #334155;
+    
+    /* 文字色 */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    
+    /* 边框 */
+    --border: #334155;
+    
+    /* 阴影 */
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    
+    /* 圆角 */
+    --radius: 12px;
+    --radius-sm: 8px;
+    
+    /* 过渡 */
+    --transition: all 0.2s ease;
+}
+
+/* 基础重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* 游戏容器 */
+.game-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 标题区域 */
+.game-header {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.game-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 50%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-top: 8px;
+}
+
+/* 主游戏区域 */
+.game-main {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* 棋盘区域 */
+.board-section {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+}
+
+.board-svg {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.2));
+}
+
+/* 控制面板 */
+.control-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel-section h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 按钮样式 */
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 10px;
+}
+
+.btn:last-child {
+    margin-bottom: 0;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+}
+
+.btn-secondary {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: #475569;
+}
+
+.btn-accent {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: white;
+}
+
+.btn-accent:hover {
+    background: linear-gradient(135deg, #fbbf24 0%, var(--accent) 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #34d399 0%, var(--success) 100%);
+}
+
+/* 快捷键列表 */
+.shortcuts-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shortcuts-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+kbd {
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    min-width: 28px;
+    text-align: center;
+}
+
+/* 状态消息 */
+.status-message {
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border-left: 3px solid var(--primary);
+}
+
+.status-message.success {
+    border-left-color: var(--success);
+    color: var(--success);
+}
+
+.status-message.error {
+    border-left-color: var(--error);
+    color: var(--error);
+}
+
+/* 拼块区域 */
+.pieces-section {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+}
+
+.pieces-section h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pieces-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+}
+
+/* 单个拼块容器 */
+.piece-wrapper {
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    cursor: grab;
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.piece-wrapper:hover {
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.piece-wrapper.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+.piece-wrapper.placed {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.piece-svg {
+    width: 80px;
+    height: 60px;
+}
+
+/* 棋盘三角形样式 */
+.board-triangle {
+    fill: #2d3748;
+    stroke: #4a5568;
+    stroke-width: 0.02;
+    transition: var(--transition);
+}
+
+.board-triangle:hover {
+    fill: #3d4758;
+}
+
+.board-triangle.blocked {
+    fill: #1a202c;
+    stroke: #718096;
+}
+
+.board-triangle.blocked-marker {
+    fill: #fbbf24;
+}
+
+/* 拼块三角形样式 */
+.piece-triangle {
+    stroke: rgba(0, 0, 0, 0.3);
+    stroke-width: 0.02;
+    cursor: grab;
+}
+
+.piece-triangle.on-board {
+    cursor: pointer;
+}
+
+/* 拖拽时的样式 */
+.dragging {
+    opacity: 0.8;
+    cursor: grabbing !important;
+}
+
+/* 有效放置位置预览 */
+.preview-triangle {
+    fill: rgba(99, 102, 241, 0.3);
+    stroke: var(--primary);
+    stroke-width: 0.03;
+    stroke-dasharray: 0.1;
+}
+
+/* 弹窗 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content h2 {
+    font-size: 2rem;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-content p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.modal-content .btn {
+    width: auto;
+    padding: 12px 32px;
+}
+
+/* 动画 */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.pulse {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* 响应式设计 */
+@media (max-width: 900px) {
+    .game-main {
+        grid-template-columns: 1fr;
+    }
+    
+    .control-panel {
+        order: -1;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .panel-section {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 600px) {
+    .game-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .game-container {
+        padding: 10px;
+    }
+    
+    .piece-svg {
+        width: 60px;
+        height: 45px;
+    }
+}
