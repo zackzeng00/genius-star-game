@@ -1075,6 +1075,41 @@ const Game = {
         this.boardSvg.classList.add('victory');
         const modal = document.getElementById('victory-modal');
         modal.classList.remove('hidden');
+
+        // 创建彩带粒子效果
+        this.createConfetti();
+    },
+
+    // 创建彩带粒子动画
+    createConfetti() {
+        const colors = ['#f59e0b', '#6366f1', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+        const container = document.createElement('div');
+        container.className = 'confetti-container';
+        container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1001;overflow:hidden;';
+        document.body.appendChild(container);
+
+        // 生成50个彩带粒子
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.cssText = `
+                position: absolute;
+                width: ${Math.random() * 10 + 5}px;
+                height: ${Math.random() * 20 + 10}px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                left: ${Math.random() * 100}%;
+                top: -20px;
+                opacity: ${Math.random() * 0.5 + 0.5};
+                border-radius: 2px;
+                animation: confetti-fall ${Math.random() * 2 + 2}s linear forwards;
+                animation-delay: ${Math.random() * 0.5}s;
+                transform: rotate(${Math.random() * 360}deg);
+            `;
+            container.appendChild(confetti);
+        }
+
+        // 3秒后移除彩带容器
+        setTimeout(() => container.remove(), 4000);
     },
 
     /**
