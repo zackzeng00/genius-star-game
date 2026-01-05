@@ -412,9 +412,21 @@ kbd {
 .pieces-section h3 {
     font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.pieces-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-align: center;
+    padding: 6px 12px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 20px;
+    display: inline-block;
+    width: 100%;
 }
 
 .pieces-container {

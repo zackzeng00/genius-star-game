@@ -22,6 +22,19 @@ const Game = {
     touchOffset: { x: 0, y: 0 },
     lastValidPlacement: false,
 
+    // 手势状态（待选框砖块交互）
+    pieceGesture: {
+        touchStartTime: 0,
+        touchTimer: null,
+        lastClickTime: 0,
+        isLongPress: false,
+        piece: null,
+        startX: 0,
+        startY: 0
+    },
+    LONG_PRESS_DURATION: 300,   // 长按阈值（毫秒）
+    DOUBLE_CLICK_DURATION: 300, // 双击阈值（毫秒）
+
     // 骰子定义（与 Python 版本一致）
     // 每组是一个骰子的所有可能值
     diceNumbers: [
@@ -514,12 +527,12 @@ const Game = {
 
             wrapper.appendChild(svg);
 
-            // 点击选择
-            wrapper.addEventListener('click', () => this.selectPiece(piece));
-
-            // 拖拽开始
-            wrapper.addEventListener('mousedown', (e) => this.startDrag(e, piece));
-            wrapper.addEventListener('touchstart', (e) => this.startTouchDrag(e, piece));
+            // 手势事件绑定（单击旋转、双击翻转、长按拖动）
+            wrapper.addEventListener('mousedown', (e) => this.handlePieceMouseDown(e, piece));
+            wrapper.addEventListener('mouseup', (e) => this.handlePieceMouseUp(e, piece));
+            wrapper.addEventListener('touchstart', (e) => this.handlePieceTouchStart(e, piece), { passive: false });
+            wrapper.addEventListener('touchend', (e) => this.handlePieceTouchEnd(e, piece));
+            wrapper.addEventListener('touchmove', (e) => this.handlePieceTouchMove(e, piece), { passive: false });
 
             this.piecesContainer.appendChild(wrapper);
         });
@@ -546,11 +559,11 @@ const Game = {
 
         // 创建浮动元素
         this.createFloatingPiece(piece, startX, startY);
-        this.setStatus(`操作: 拖动移动 / 按钮旋转翻转`);
+        this.setStatus(`拖动到棋盘放置`);
     },
 
     /**
-     * 创建浮动拼块元素
+     * 创建浮动拼块元素（无操作按钮，纯拖拽）
      */
     createFloatingPiece(piece, x, y) {
         // 移除旧的
@@ -558,16 +571,17 @@ const Game = {
 
         const container = document.createElement('div');
         container.className = 'floating-piece-container';
-        container.style.position = 'absolute';
+        container.style.position = 'fixed'; // 使用 fixed 定位避免滚动偏移
         container.style.zIndex = '1000';
-        // 初始位置：如果没有指定，则位于屏幕中心或原位置？
-        // 简单起见，如果 x,y 未指定，找 inventory 位置
+        container.style.pointerEvents = 'none'; // 让拖拽事件穿透到下面
+
+        // 初始位置
         if (x === undefined || y === undefined) {
             const wrapper = this.piecesContainer.querySelector(`.piece-wrapper[data-piece-index="${piece.index}"]`);
             if (wrapper) {
                 const rect = wrapper.getBoundingClientRect();
-                x = rect.left + window.scrollX;
-                y = rect.top + window.scrollY;
+                x = rect.left + rect.width / 2;
+                y = rect.top + rect.height / 2;
             } else {
                 x = window.innerWidth / 2;
                 y = window.innerHeight / 2;
@@ -575,58 +589,31 @@ const Game = {
         }
 
         this.floatingPos = { x, y };
-        this.updateFloatingElementPosition();
 
         // 渲染拼块 SVG
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('class', 'piece-svg'); // Add class for easier selection later
-        svg.setAttribute('viewBox', '-6 -6 12 12'); // 保持与棋盘一致的坐标系以便视觉大小匹配
-        // 注意：Inventory 是 0.8 缩放，这里我们可能需要大一点？或者保持一致？
-        // 棋盘 SVG 是 viewBox="-6 -6 12 12"。
-        // 拼块渲染需要一致。
-        svg.style.width = '120px'; // 稍微大一点方便操作
+        svg.setAttribute('class', 'piece-svg');
+        svg.setAttribute('viewBox', '-6 -6 12 12');
+        svg.style.width = '120px';
         svg.style.height = '120px';
         svg.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))';
         svg.style.overflow = 'visible';
 
-        Pieces.render(piece, svg, { scale: 1, offsetX: 0, offsetY: 0 }); // scale 1 对应棋盘大小
+        Pieces.render(piece, svg, { scale: 1, offsetX: 0, offsetY: 0 });
         container.appendChild(svg);
 
-        // 添加操作按钮（附着在拼块上方）
-        const actions = document.createElement('div');
-        actions.className = 'floating-actions';
-        actions.innerHTML = `
-            <button class="action-btn" data-action="rotate">🔄</button>
-            <button class="action-btn" data-action="flip">↔️</button>
-            <button class="action-btn action-cancel" data-action="cancel">✕</button>
-        `;
-        // 绑定按钮事件
-        actions.querySelector('[data-action="rotate"]').addEventListener('mousedown', (e) => { e.stopPropagation(); this.rotatePiece(); });
-        actions.querySelector('[data-action="flip"]').addEventListener('mousedown', (e) => { e.stopPropagation(); this.flipPiece(); });
-        actions.querySelector('[data-action="cancel"]').addEventListener('mousedown', (e) => { e.stopPropagation(); this.cancelSelection(); });
-
-        // Mobile touch support for buttons
-        actions.querySelector('[data-action="rotate"]').addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); this.rotatePiece(); });
-        actions.querySelector('[data-action="flip"]').addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); this.flipPiece(); });
-        actions.querySelector('[data-action="cancel"]').addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); this.cancelSelection(); });
-
-        container.appendChild(actions);
-
-        // 绑定拖拽事件到浮动元素本身
-        container.addEventListener('mousedown', (e) => this.startFloatingDrag(e));
-        container.addEventListener('touchstart', (e) => this.startFloatingTouchDrag(e));
+        // 不再添加操作按钮，用户通过待选框单击/双击操作
 
         document.body.appendChild(container);
         this.floatingElement = container;
+        this.updateFloatingElementPosition();
     },
 
     updateFloatingElementPosition() {
         if (!this.floatingElement || !this.floatingPos) return;
-        // Adjust for the size of the floating element itself to center it on the cursor
-        // Assuming 120px width/height for the SVG, and actions above it.
-        // Let's center the SVG part on the cursor.
-        const svgWidth = 120; // from createFloatingPiece
+        const svgWidth = 120;
         const svgHeight = 120;
+        // 使用 fixed 定位，直接用客户端坐标
         this.floatingElement.style.left = `${this.floatingPos.x - svgWidth / 2}px`;
         this.floatingElement.style.top = `${this.floatingPos.y - svgHeight / 2}px`;
     },
@@ -731,9 +718,9 @@ const Game = {
 
         if (clientX === undefined) return;
 
-        // Update position
-        this.floatingPos.x = clientX - this.dragOffset.x;
-        this.floatingPos.y = clientY - this.dragOffset.y;
+        // 直接让浮动件中心跟随手指/鼠标位置
+        this.floatingPos.x = clientX;
+        this.floatingPos.y = clientY;
         this.updateFloatingElementPosition();
 
         // Check board preview
@@ -832,6 +819,170 @@ const Game = {
 
     startTouchDrag(e, piece) {
         this.startDrag(e, piece);
+    },
+
+    /**
+     * ========================================
+     * 待选框砖块手势处理
+     * 单击旋转 | 双击翻转 | 长按拖动
+     * ========================================
+     */
+
+    // PC端鼠标按下
+    handlePieceMouseDown(e, piece) {
+        if (piece.placed) return;
+        e.preventDefault();
+
+        const now = Date.now();
+        this.pieceGesture.piece = piece;
+        this.pieceGesture.startX = e.clientX;
+        this.pieceGesture.startY = e.clientY;
+        this.pieceGesture.touchStartTime = now;
+        this.pieceGesture.isLongPress = false;
+
+        // 设置长按定时器
+        this.pieceGesture.touchTimer = setTimeout(() => {
+            this.pieceGesture.isLongPress = true;
+            // 振动反馈
+            if (navigator.vibrate) navigator.vibrate(30);
+            // 进入拖拽模式
+            this.startDrag(e, piece);
+        }, this.LONG_PRESS_DURATION);
+    },
+
+    // PC端鼠标释放
+    handlePieceMouseUp(e, piece) {
+        if (piece.placed) return;
+
+        // 清除长按定时器
+        if (this.pieceGesture.touchTimer) {
+            clearTimeout(this.pieceGesture.touchTimer);
+            this.pieceGesture.touchTimer = null;
+        }
+
+        // 如果是长按，则已经进入拖拽模式，不做处理
+        if (this.pieceGesture.isLongPress) {
+            return;
+        }
+
+        const now = Date.now();
+        const timeSinceLastClick = now - this.pieceGesture.lastClickTime;
+
+        if (timeSinceLastClick < this.DOUBLE_CLICK_DURATION) {
+            // 双击 → 翻转
+            this.rotatePieceInPlace(piece);
+            this.flipPieceInPlace(piece);
+            this.pieceGesture.lastClickTime = 0; // 重置
+        } else {
+            // 单击 → 旋转
+            this.rotatePieceInPlace(piece);
+            this.pieceGesture.lastClickTime = now;
+        }
+    },
+
+    // 移动端触摸开始
+    handlePieceTouchStart(e, piece) {
+        if (piece.placed) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const now = Date.now();
+
+        this.pieceGesture.piece = piece;
+        this.pieceGesture.startX = touch.clientX;
+        this.pieceGesture.startY = touch.clientY;
+        this.pieceGesture.touchStartTime = now;
+        this.pieceGesture.isLongPress = false;
+
+        // 设置长按定时器
+        this.pieceGesture.touchTimer = setTimeout(() => {
+            this.pieceGesture.isLongPress = true;
+            // 振动反馈
+            if (navigator.vibrate) navigator.vibrate(30);
+            // 进入拖拽模式
+            this.selectPiece(piece, touch.clientX, touch.clientY);
+            // 模拟触摸事件开始拖拽
+            this.startFloatingTouchDrag(e);
+        }, this.LONG_PRESS_DURATION);
+    },
+
+    // 移动端触摸移动（用于取消长按）
+    handlePieceTouchMove(e, piece) {
+        if (!this.pieceGesture.touchTimer) return;
+
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.clientX - this.pieceGesture.startX);
+        const dy = Math.abs(touch.clientY - this.pieceGesture.startY);
+
+        // 如果移动超过阈值，取消长按检测
+        if (dx > 10 || dy > 10) {
+            clearTimeout(this.pieceGesture.touchTimer);
+            this.pieceGesture.touchTimer = null;
+        }
+    },
+
+    // 移动端触摸结束
+    handlePieceTouchEnd(e, piece) {
+        if (piece.placed) return;
+
+        // 清除长按定时器
+        if (this.pieceGesture.touchTimer) {
+            clearTimeout(this.pieceGesture.touchTimer);
+            this.pieceGesture.touchTimer = null;
+        }
+
+        // 如果是长按，则已经进入拖拽模式，不做处理
+        if (this.pieceGesture.isLongPress) {
+            return;
+        }
+
+        const now = Date.now();
+        const timeSinceLastClick = now - this.pieceGesture.lastClickTime;
+
+        if (timeSinceLastClick < this.DOUBLE_CLICK_DURATION) {
+            // 双击 → 翻转
+            this.flipPieceInPlace(piece);
+            this.pieceGesture.lastClickTime = 0; // 重置
+        } else {
+            // 单击 → 旋转
+            this.rotatePieceInPlace(piece);
+            this.pieceGesture.lastClickTime = now;
+        }
+    },
+
+    // 原地旋转（不选中，直接旋转待选框中的砖块）
+    rotatePieceInPlace(piece) {
+        if (piece.placed) return;
+        Pieces.rotate(piece);
+        this.renderPieces();
+        this.setStatus(`🔄 已旋转: ${piece.name}`);
+    },
+
+    // 原地翻转（不选中，直接翻转待选框中的砖块）
+    flipPieceInPlace(piece) {
+        if (piece.placed) return;
+        Pieces.reflect(piece);
+        this.renderPieces();
+        this.setStatus(`↔️ 已翻转: ${piece.name}`);
+    },
+
+    // 触摸版本的浮动拖拽开始
+    startFloatingTouchDrag(e) {
+        if (!this.floatingElement) return;
+
+        this.isDraggingFloating = true;
+        const touch = e.touches[0];
+
+        // 直接将浮动件中心移动到触摸位置
+        this.floatingPos.x = touch.clientX;
+        this.floatingPos.y = touch.clientY;
+        this.updateFloatingElementPosition();
+
+        this._boundFloatingMove = this.handleFloatingMove.bind(this);
+        this._boundFloatingUp = this.handleFloatingUp.bind(this);
+
+        document.addEventListener('touchmove', this._boundFloatingMove, { passive: false });
+        document.addEventListener('touchend', this._boundFloatingUp);
     },
 
 
