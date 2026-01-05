@@ -19,10 +19,13 @@ const Game = {
     isDragging: false,
     dragOffset: { x: 0, y: 0 },
     dragElement: null,
+    touchOffset: { x: 0, y: 0 },
+    lastValidPlacement: false,
 
     // 骰子定义（与 Python 版本一致）
     // 每组是一个骰子的所有可能值
     diceNumbers: [
+        // ... (abbreviated, keeping original line numbers same if possible, but replace tool handles context)
         [1, 5, 15, 34, 44, 48],           // 骰子1: 6面
         [2, 4, 7, 8, 9, 11, 16, 17],      // 骰子2: 8面
         [10, 27, 31],                      // 骰子3: 3面
@@ -31,6 +34,164 @@ const Game = {
         [19, 20, 21, 28, 29, 30],         // 骰子6: 6面
         [25, 26, 36, 37, 38, 40, 45, 47]  // 骰子7: 8面
     ],
+
+    // ... (rest of state)
+
+    /**
+     * Start dragging the floating piece
+     */
+    startFloatingDrag(e) {
+        if (!this.floatingElement) return;
+        e.preventDefault(); // Prevent default touch actions
+
+        this.isDraggingFloating = true;
+        const isTouch = e.type.startsWith('touch');
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        // Calculate offset so we drag from clicked point relative to the element
+        // Since floatingElement is absolute, rect gives us screen coords.
+
+        // Touch Offset: Lift the piece up on mobile so finger doesn't hide it
+        this.touchOffset = isTouch ? { x: 0, y: -80 } : { x: 0, y: 0 };
+
+        this.dragOffset = {
+            x: clientX - this.floatingPos.x,
+            y: clientY - this.floatingPos.y
+        };
+
+        // Smooth visual transition for the lift
+        if (isTouch) {
+            this.floatingElement.style.transition = 'transform 0.1s';
+            // We'll apply the offset in the move handler or immediately?
+            // If we apply immediately, it jumps.
+            // Let it jump or animate? Animate is better but complex logic.
+            // For now, let it jump to "above finger".
+        }
+
+        // Bind listeners
+        this._boundFloatingMove = this.handleFloatingMove.bind(this);
+        this._boundFloatingUp = this.handleFloatingUp.bind(this);
+
+        document.addEventListener('mousemove', this._boundFloatingMove);
+        document.addEventListener('mouseup', this._boundFloatingUp);
+        document.addEventListener('touchmove', this._boundFloatingMove, { passive: false });
+        document.addEventListener('touchend', this._boundFloatingUp);
+
+        this.floatingElement.style.cursor = 'grabbing';
+        this.lastValidPlacement = false;
+    },
+
+    handleFloatingMove(e) {
+        if (!this.isDraggingFloating) return;
+        e.preventDefault();
+
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        if (clientX === undefined) return;
+
+        // Update position with Touch Offset
+        this.floatingPos.x = clientX - this.dragOffset.x + this.touchOffset.x;
+        this.floatingPos.y = clientY - this.dragOffset.y + this.touchOffset.y;
+        this.updateFloatingElementPosition();
+
+        // Check board preview
+        const boardRect = this.boardSvg.getBoundingClientRect();
+        // Allow some tolerance
+        // Visual center is floatingPos + size/2. To be accurate, use the "touch point" or the piece center?
+        // Let's use piece center (roughly floatingPos + 60, +60).
+        // Actually, Board.findPlacement expects "svg point".
+        // The piece center in screen coords is:
+        const centerX = this.floatingPos.x + 60; // 120px / 2
+        const centerY = this.floatingPos.y + 60;
+
+        if (centerX >= boardRect.left && centerX <= boardRect.right &&
+            centerY >= boardRect.top && centerY <= boardRect.bottom) {
+
+            // Map center to SVG coords
+            const svgPoint = this.clientToSvg(centerX, centerY);
+
+            const shift = Board.findPlacement(this.selectedPiece, svgPoint.x, svgPoint.y);
+            if (shift) {
+                this.renderPreview(this.selectedPiece, shift);
+
+                // Haptic Feedback for new valid state
+                if (!this.lastValidPlacement) {
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    this.lastValidPlacement = true;
+                }
+            } else {
+                this.clearPreview();
+                this.lastValidPlacement = false;
+            }
+        } else {
+            this.clearPreview();
+            this.lastValidPlacement = false;
+        }
+    },
+
+    handleFloatingUp(e) {
+        if (!this.isDraggingFloating) return;
+        this.isDraggingFloating = false;
+        this.touchOffset = { x: 0, y: 0 }; // Reset
+        this.lastValidPlacement = false;
+
+        document.removeEventListener('mousemove', this._boundFloatingMove);
+        document.removeEventListener('mouseup', this._boundFloatingUp);
+        document.removeEventListener('touchmove', this._boundFloatingMove);
+        document.removeEventListener('touchend', this._boundFloatingUp);
+
+        if (this.floatingElement) {
+            this.floatingElement.style.cursor = 'grab';
+            this.floatingElement.style.transition = ''; // Remove temp transition
+        }
+
+        // Try to place
+        // Need coordinates. For touchend, changedTouches usually has it.
+        // But users might lift finger "above" the board due to offset.
+        // So we should use the LAST KNOWN valid position? 
+        // OR calculate based on where the piece IS visually?
+        // Since we physically moved `floatingPos`, we use that.
+
+        const centerX = this.floatingPos.x + 60;
+        const centerY = this.floatingPos.y + 60;
+
+        const boardRect = this.boardSvg.getBoundingClientRect();
+        if (centerX >= boardRect.left && centerX <= boardRect.right &&
+            centerY >= boardRect.top && centerY <= boardRect.bottom) {
+
+            const svgPoint = this.clientToSvg(centerX, centerY);
+            const shift = Board.findPlacement(this.selectedPiece, svgPoint.x, svgPoint.y);
+
+            if (shift) {
+                // Success! Place it.
+                if (Board.placePiece(this.selectedPiece, shift)) {
+                    if (navigator.vibrate) navigator.vibrate([20, 50, 20]); // Success pattern
+                    this.renderBoard();
+
+                    // Remove floating element
+                    if (this.floatingElement) this.floatingElement.remove();
+                    this.floatingElement = null;
+
+                    this.selectedPiece = null;
+                    this.renderPieces();
+                    this.clearPreview();
+                    this.setStatus(`✓ 已放置`);
+
+                    if (Board.isComplete()) {
+                        this.showVictory();
+                    }
+                    return;
+                }
+            }
+        }
+
+        // If we get here, placement failed.
+        // behavior: STAY at current position.
+        this.clearPreview();
+        this.setStatus('松开拼块 - 可继续拖动或操作');
+    },
 
     // 当前选中的骰子值（每个骰子一个）
     selectedDice: [null, null, null, null, null, null, null],
@@ -96,6 +257,52 @@ const Game = {
         // 触摸事件
         this.boardSvg.addEventListener('touchmove', (e) => this.handleBoardTouchMove(e));
         this.boardSvg.addEventListener('touchend', (e) => this.handleBoardTouchEnd(e));
+
+        // Mobile Controls
+        const btnMobRotate = document.getElementById('btn-mobile-rotate');
+        if (btnMobRotate) btnMobRotate.addEventListener('touchstart', (e) => { e.preventDefault(); this.rotatePiece(); });
+
+        const btnMobFlip = document.getElementById('btn-mobile-flip');
+        if (btnMobFlip) btnMobFlip.addEventListener('touchstart', (e) => { e.preventDefault(); this.flipPiece(); });
+
+        const btnMobReset = document.getElementById('btn-mobile-reset');
+        if (btnMobReset) btnMobReset.addEventListener('touchstart', (e) => { e.preventDefault(); this.resetGame(); });
+
+        const btnMobMenu = document.getElementById('btn-mobile-menu');
+        if (btnMobMenu) btnMobMenu.addEventListener('touchstart', (e) => { e.preventDefault(); this.toggleMobileMenu(); });
+    },
+
+    toggleMobileMenu() {
+        const panel = document.getElementById('control-panel');
+        panel.classList.toggle('mobile-visible');
+
+        // Ensure close button exists
+        if (panel.classList.contains('mobile-visible')) {
+            if (!panel.querySelector('.mobile-close-btn')) {
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'mobile-close-btn';
+                closeBtn.innerHTML = '✕';
+                Object.assign(closeBtn.style, {
+                    position: 'absolute',
+                    top: '15px',
+                    right: '15px',
+                    width: '32px',
+                    height: '32px',
+                    border: 'none',
+                    background: 'rgba(255,255,255,0.1)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    fontSize: '1.2rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: '2001'
+                });
+                closeBtn.onclick = () => panel.classList.remove('mobile-visible');
+                panel.insertBefore(closeBtn, panel.firstChild);
+            }
+        }
     },
 
     /**
@@ -255,6 +462,7 @@ const Game = {
     resetGame() {
         // 重置棋盘 (仅清除拼块, 保留阻挡)
         Board.clearPieces();
+        this.boardSvg.classList.remove('victory');
 
         // 重置所有拼块
         this.pieces.forEach(piece => Pieces.reset(piece));
@@ -654,6 +862,7 @@ const Game = {
 
         for (const t of placedTriangles) {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('class', 'preview-triangle');
             path.setAttribute('d', Geometry.trianglePath(t));
             path.setAttribute('fill', piece.color);
             path.setAttribute('stroke', 'white');
@@ -709,6 +918,12 @@ const Game = {
         } else {
             this.setStatus(`✗ 无法放置在此位置`);
         }
+    },
+
+    showVictory() {
+        this.boardSvg.classList.add('victory');
+        const modal = document.getElementById('victory-modal');
+        modal.classList.remove('hidden');
     },
 
     /**
